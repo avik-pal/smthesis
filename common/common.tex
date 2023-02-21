@@ -1,0 +1,71 @@
+\usepackage{pifont}% http://ctan.org/pkg/pifont
+\usepackage{xcolor}%
+\usepackage{mathtools}%
+\usepackage{subcaption}
+\usepackage{caption}
+\usepackage{adjustbox}
+\usepackage{arydshln}
+\usepackage{tabularx}
+\usepackage{makecell}
+\usepackage{lipsum}
+
+\mathtoolsset{showonlyrefs=true} % show only crossref-ed equation numbers
+
+% Markers
+\newcommand{\cmark}{\ding{51}}%
+\newcommand{\xmark}{\ding{55}}%
+\newcommand{\crossmark}{{\color{red} \xmark}}%
+\newcommand{\tickmark}{{\color{green} \cmark}}%
+
+% Citations
+\newcommand{\tocite}{{\color{blue} \textbf{[citation needed]}}}
+\newcommand{\tocitex}[1]{{\color{blue} \textbf{[citation needed: #1]}}}
+
+% Todonotes alternatives
+\newcommand{\todo}[1]{{\color{orange} (\textbf{todo}) #1}}
+\newcommand{\note}[1]{{\color{purple} (\textbf{note}) #1}}
+\newcommand{\avik}[1]{{\color{red} (avikpal@) #1}}
+\newcommand{\cred}[1]{{\color{red}#1}}
+
+\newcommand{\stcopy}{{\color{green} Done (Copy)}}
+\newcommand{\stwip}{{\color{orange} WIP}}
+\newcommand{\sttodo}{{\color{red} Todo}}
+\newcommand{\stdone}{{\color{green} Done}}
+\newcommand{\stblock}{{\color{red} Blocking}}
+\newcommand{\stnblock}{{\color{purple} Non Blocking}}
+
+% Reporting results
+\newcommand{\sdval}[2]{$#1 \pm #2$}
+\newcommand{\sdvalb}[2]{$\mathbf{#1 \pm #2}$}
+
+% Horizontal Phantom Shortcut
+\newcommand{\hp}[1]{\hphantom{#1}}
+
+% ax - bx
+\newcommand{\timeschange}[2]{$\mathit{#1\times - #2\times}$}
+
+% Differential Equations
+\newcommand{\atol}{\texttt{atol}}
+\newcommand{\rtol}{\texttt{rtol}}
+\newcommand{\eest}{\texttt{E}_{\texttt{Est}}}
+\newcommand{\treg}{\texttt{t}_{\texttt{reg}}}
+
+% Math Helpers
+\newcommand{\func}[2]{#1\left(#2\right)}
+\newcommand{\cprob}[3]{\func{#1}{#2~\mid~#3}}
+\newcommand{\prob}[2]{\func{#1}{#2}}
+\newcommand{\Exp}[2]{\mathbb{E}_{#1}\left[{#2}\right]}
+
+% Copied from a paper
+\newcommand{\cpaper}{~$^\text{\textparagraph}$}
+
+% Footnote without marker
+\newcommand\blfootnote[1]{%
+  \begingroup
+  \renewcommand\thefootnote{}\footnote{#1}%
+  \addtocounter{footnote}{-1}%
+  \endgroup
+}
+
+% Colored lipsum
+\newcommand{\clipsum}[1]{{\color{purple} \lipsum[#1]}}
