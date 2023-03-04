@@ -1,8 +1,146 @@
 \chapter{Neural Ordinary Differential Equations}
 \label{chapter:neural_ode}
 
-\section{Solving Ordinary Differential Equations}
+\section{Ordinary Differential Equations}
 \label{sec:ordinary_differential_equations}
+
+Ordinary Differential Equations (ODEs) are equations defined by a relationship to its derivative. We can generally write an ODE as:
+%
+\begin{equation}
+  \frac{\partial z}{\partial t} = \func{f}{z, p, t}
+\end{equation}
+%
+This effectively describes the evolution of a state $\func{z}{t}$. To compute $\func{z}{t}$, we could solve the following integral equation:
+%
+\begin{equation}
+  \func{z}{t} = \int_{t_0}^{t} \func{f}{z, p, t} \, \dt
+\end{equation}
+%
+where $t_0$ is the initial time. However, computing these solutions analytically is almost impossible and hence we need to rely on numerical solvers. For this thesis, we will focus exclusively on Initial Value Problems (IVP) which specify the differential equations along with an initial condition, i.e., value of the state at $t_0$: $z(t_0)$. There are other kinds of ODE Problems like Boundary Value Problems (BVP) which specify additional conditions at the end of the interval, i.e., $z(t_1)$.
+
+Numerical Solvers for ODEs can be broadly categorized into Implicit Methods and Explicit Methods. Explicit Methods compute the state of the dynamical system at a future time-point given the current state. Implicit Methods solve for the the state of the dynamical system at a future time-point given the current state \textit{and the later one}. For example, consider two extremely simple numerical solvers for an ODE:
+%
+\begin{itemize}
+  \item Euler Method (Explicit Method)~\citep{euler1824institutionum}:
+        %
+        \begin{equation}
+          z_{n + 1} = z_n + \dt \cdot \func{f}{z_n, p, t_n}
+        \end{equation}
+        %
+  \item Backward Euler Method (Implicit Method)~\citep{euler1824institutionum}:
+        %
+        \begin{equation}
+          z_{n + 1} = z_n + \dt \cdot \func{f}{z_{n + 1}, p, t_{n + 1}}
+        \end{equation}
+        %
+\end{itemize}
+%
+Explicit methods tend to be faster than implicit methods but are not effective for solving stiff equations~\citep{wanner1996solving,kim2021stiff}. In this thesis, we will exclusively use explicit methods. A detailed discussion on implicit and explicit methods is beyond the scope of this thesis and we refer the readers to \citet{rackauckas2019scimlbook}.
+
+\section{Explicit ODE Solvers}
+\label{subsec:explicit_ode_solvers}
+
+In this section, we will briefly discuss ODE solvers that are relevant in the context of Neural ODEs. We start with Euler Method~(\Cref{subsec:euler_method}) to give a simple introduction to numerical solvers. Then we build upon that to describe the Tsitouras $\mathbf{5 (4)}$ Runge-Kutta Method~(\Cref{subsec:tsit5_method}) that servers as an excellent default for most ODEs at lower tolerances. Finally we describe $\mathbf{3^{rd}}$ order Adams-Bashforth Method~(\Cref{subsec:vcab3_method}), a multi-step method that we find to be particularly useful for Neural ODEs.
+
+\subsection{Euler Method}
+\label{subsec:euler_method}
+
+The forward Euler method is one of the simplest methods to numerically solve an IVP. Consider the Taylor series expansion of the function $\func{z}{t}$ around $t_n$:
+%
+\begin{equation}
+  \func{z}{t + \dt} = \func{z}{t} + \dt \cdot \left. \frac{\partial z}{\partial t} \right|_{t} + \frac{1}{2} \dt^2 \cdot \left. \frac{\partial^2 z}{\partial t^2} \right|_{t} + \bigO{\dt^3}
+\end{equation}
+%
+If we ignore the quadratic and higher order terms, we get the forward Euler method~\citep{euler1824institutionum}:
+%
+\begin{align}
+  & \func{z}{t + \dt} = \func{z}{t} + \dt \cdot \left. \frac{\partial z}{\partial t} \right|_{t}\\
+  \implies & z_{n + 1} = z_n + \dt \cdot \func{f}{z_n, p, t_n}
+\end{align}
+%
+This method is extremely simple however, has an extremely high local truncation error of $\bigO{\dt^2}$. Hence, this method is rarely used in the context of most IVPs and especially not for Neural ODEs.
+
+\subsection{Tsitouras $\mathbf{5 (4)}$ Runge-Kutta (Tsit5) Method}
+\label{subsec:tsit5_method}
+
+Runge-Kutta (RK) Methods~\citep{runge1895numerische, kutta1901beitrag} are widely used to approximate the solutions of ODEs numerically. Given a tableau of coefficients $\left\{A, c, b\right\}$, these methods combine $s$ stages to obtain the estimate at $t + \dt$.
+%
+\begin{align}
+    & k_s = \func{f}{t + c_s \cdot \dt, z(t) + \sum_{i = 1}^{s - 1} a_{si} \cdot k_i}\\
+    & z(t + dt) = z(t) + \dt \cdot \left( \sum_{i = 1}^s b_i \cdot k_i \right)
+\end{align}
+%
+\citet{tsitouras2011runge} presented a tableau of coefficients for a 6-stage RK method of order $5 (4)$. We have found Tsit5 to be an excellent default for most ODEs (including Neural ODEs) at lower tolerances. \todo{pull up some results from SciMLBenchmarks}
+
+\subsection{$\mathbf{3^{rd}}$ order Adams-Bashforth (VCAB3) Method}
+\label{subsec:vcab3_method}
+
+Contrary to RK Methods, Multi-step methods compute $\func{z}{t}$ by efficiently using the information from previous time-steps. A linear multi-step method uses a linear interpolation to compute $z_{n + 1}$:
+%
+\begin{equation}
+  z_{n + 1} = z_n + \dt \cdot \sum_{i = 0}^{s} \beta_i \cdot \func{f}{z_{n + 1 - i}, p, t_{n + 1 - i}} \qquad \texttt{given } \sum_{i = 0}^s \beta_i = 1
+\end{equation}
+%
+where $s$ is the number of steps. If $\beta_0 = 0$, then we have an explicit method. In this thesis, we will focus on Adams methods which involve solving:
+%
+\begin{equation}
+  z_{n + 1} = z_n + \int_{t_n}^{t_{n + 1}} \func{f}{z(\tau), p, \tau} \cdot \mathrm{d}\tau
+\end{equation}
+%
+Adams methods approximate the integral using polynomial interpolation of the function $f$ using evaluations at points $\left\{ t_{n + 1 - s}, t_{n + 2 - s}, \dots, t_{n} \right\}$. Adams-Bashforth Method approximates the function using Lagrange Interpolation:
+%
+\begin{equation}
+  \func{f}{z(\tau), p, \tau} \approx \sum_{i = 0}^{s} \mathcal{L}_{n + 1 - i} \cdot \func{f}{z_{n + 1 - i}, p, t_{n + 1 - i}}
+\end{equation}
+%
+where $\mathcal{L}_{n + 1 - i}$'s are the Lagrange polynomials. For $s = 3$, we get the $\mathbf{3^{rd}}$ order Adams-Bashforth (VCAB3) Method~\citep{durran1991third}:
+%
+\begin{equation}
+  z_{n + 1} = z_n + \frac{\dt}{12} \cdot \left( 23 \func{f}{z_n, p, t_n} - 16 \func{f}{z_{n - 1}, p, t_{n - 1}} + 5 \func{f}{z_{n - 2}, p, t_{n - 2}} \right)
+\end{equation}
+%
+This method has a local truncation error of $\bigO{\dt^3}$. Additionally, since this method evaluates $f$ very infrequently (by reusing the evaluations of $f$ from previous time-steps), it is efficient for ODEs with expensive evaluations of $f$ like a Neural ODE.
+
+\section{Adaptive Time-Stepping in Numerical ODE Solvers}
+\label{sec:adaptive_time_stepping}
+
+\todo{might need rewording}
+
+\todo{quite specific to RK methods. add comments for multistep methods}
+
+Adaptive solvers need to maximize the step size ($\dt$) while keeping the error estimate below the user-specified tolerances, i.e., they need to satisfy:
+%
+\begin{equation}
+    \eest \leq \atol + \texttt{max}\left( |z(t)|, |z(t + \dt)|\right) \cdot \rtol
+\end{equation}
+%
+where $\eest$ is the local error estimate. Adaptive solvers utilize an additional linear combiner $\Tilde{b}_i$ to get an alternate solution, typically with one order less convergence~\citep{wanner1996solving, fehlberg1968classical, dormand1980family,tsitouras2011runge}.
+%
+\begin{equation}
+  \Tilde{z}(t + dt) = z(t) + \dt \cdot \left( \sum_{i = 1}^s \Tilde{b}_i \cdot k_i \right)
+\end{equation}
+%
+A classic result from Richardson extrapolation shows that $\eest = \| \Tilde{z}(t + \dt) - z(t + \dt) \|$ is an estimate of the local truncation error~\citep{hairer1, ascher1998computer}. The new step size is determined using the following:
+%
+\begin{equation}
+    q = \left\| \frac{\eest}{\atol + \texttt{max}\left( |z(t)|, |z(t + \dt)|\right) \cdot \rtol} \right\|
+\end{equation}
+%
+\begin{itemize}
+    \item If $q < 1$, $\dt$ is accepted.
+    \item Otherwise, it is rejected and reduced. A standard PI controller proposes the new step size to be:
+    %
+    \begin{equation}
+        dt_{new} = \eta \cdot q_{n - 1}^\alpha \cdot q_{n}^\beta \cdot dt
+    \end{equation}
+    %
+    where $\eta$ is the safety factor, $q_{n - 1}$ is the error proportion of the previous step, and $(\alpha, \beta)$ are tunable PI-gain hyperparameters~\cite{wanner1996solving}. 
+\end{itemize}
+
+We defer the discussion of error estimation schemes for stochastic RK integrators to  \citet{rackauckas2017adaptive, rackauckas2020sosri}.
+
+\todo{do a section on error estimation for stochastic RK integrators in Neural SDEs chapter}
+
 
 \section{Sensitivity Analysis of ODEs}
 \label{sec:sensitivity_analysis_odes}
@@ -13,3 +151,28 @@
 \subsection{Discrete Sensitivity Analysis}
 \label{subsec:discrete_sensitivity_analysis_odes}
 
+
+\section{Neural Ordinary Differential Equations}
+\label{sec:neural_odes}
+
+\section{Not All ODE Solvers are Created Equal}
+\label{sec:not_all_solvers_are_created_equal}
+
+\todo{Show a plot from SciMLBenchmarks.jl to emphasize why we need multiple kinds of solvers even for Neural ODEs.}
+
+\section{Common Applications of Neural ODEs}
+\label{sec:neural_odes_applications}
+
+
+\section{Accelerating Neural ODEs}
+\label{sec:accelerating_neural_odes_prior_works}
+
+\subsection{Jacobian Regularization FFJORD}
+
+\subsection{Taylor Neural ODE}
+
+\subsection{STEER}
+
+\subsection{Hypersolvers for Neural ODEs}
+
+\subsection{Opening the Blackbox: Global Regularization Schemes}

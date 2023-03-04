@@ -8,6 +8,7 @@
 \usepackage{tabularx}
 \usepackage{makecell}
 \usepackage{lipsum}
+\usepackage{amsmath}
 
 \mathtoolsset{showonlyrefs=true} % show only crossref-ed equation numbers
 
@@ -49,12 +50,16 @@
 \newcommand{\rtol}{\texttt{rtol}}
 \newcommand{\eest}{\texttt{E}_{\texttt{Est}}}
 \newcommand{\treg}{\texttt{t}_{\texttt{reg}}}
+\newcommand{\dt}{\mathrm{d}t}
 
 % Math Helpers
 \newcommand{\func}[2]{#1\left(#2\right)}
 \newcommand{\cprob}[3]{\func{#1}{#2~\mid~#3}}
 \newcommand{\prob}[2]{\func{#1}{#2}}
 \newcommand{\Exp}[2]{\mathbb{E}_{#1}\left[{#2}\right]}
+
+% Complexity Notations
+\newcommand{\bigO}[1]{\func{\mathcal{O}}{#1}}
 
 % Copied from a paper
 \newcommand{\cpaper}{~$^\text{\textparagraph}$}

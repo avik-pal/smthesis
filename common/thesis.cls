@@ -169,7 +169,7 @@
 % Define horizontal spacing between subfigures.
 \newcommand{\SgIntHSpaceBetweenSubfloats}{\hspace{0.5cm}}
 
-
+\setcounter{secnumdepth}{4}
 
 % -----------------------------------------------------------------------
 % T A B L E
