@@ -34,7 +34,7 @@
 \begin{frontmatter}
   \SgAddTitle%
   \input{content/frontmatter/abstract}%
-  \input{content/frontmatter/originality}%
+  \input{content/frontmatter/originality}%  % Can also move to introduction
   \input{content/frontmatter/acknowledgement}%
   \SgAddToc%  Table of contents.
   \SgAddLof%  List of figures.
@@ -42,19 +42,34 @@
   \SgAddLoa%  List of algorithms.
 \end{frontmatter}
 
+% Introduction
+\input{content/chapters/introduction.tex}
+
 % Background
+\part{Foundations}
+\label{part:foundations}
+
 \input{content/chapters/neural_ode}
 \input{content/chapters/neural_sde}
 \input{content/chapters/deep_equilibrium_models}
 
 % Main Contributions
+\part{Accelerating Neural Differential Equations}
+\label{part:accelerating_nde}
+
 \input{content/chapters/infinite_time_neural_odes}
 \input{content/chapters/local_regularized_neural_des}
 
 % Auxiliary Contributions
+\part{Auxiliary Contributions}  % TODO: Change this part name
+\label{part:auxiliary_contributions}
+
 \input{content/chapters/softwares.tex}
 
 % Conclusion & Future Work
+\part{Conclusions and Future Directions}
+\label{part:conclusion_and_future_work}
+
 \input{content/chapters/conclusion.tex}
 
 % Appendix (if Any)

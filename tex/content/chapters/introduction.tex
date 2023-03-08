@@ -1,0 +1,19 @@
+\chapter{Introduction}
+\label{chapter:introduction}
+
+\todo{carry over from proposal}
+
+% The democratization of machine learning requires architectures that automatically adapt to new problems. Implicit Machine Learning has emerged as a popular modeling framework, enabling ML practitioners to design neural networks that can adaptively modify their depth based on the input problem. The ``depth'' of these models is typically a function of the number of internal explicit neural network evaluations. In this thesis, we will focus on two main types of implicit models -- Deep Equilibrium Models (DEQs)~\citep{bai_deep_2019} drive a discrete dynamical system parameterized by a neural network to steady state, and Neural Ordinary Differential Equations (Neural ODEs)~\citep{chen2018neural} solve an ODE parameterized by a neural network over a fixed time-span. There are several extensions/generalizations to these frameworks -- like Multiscale DEQs~\citep{bai_multiscale_2020}, Neural Stochastic Differential Equations~\citep{liu2019neural}, Universal Differential Equations~\citep{rackauckas2020universal}, etc. -- and we will show that our proposed methods naturally extend to these setups.
+
+
+% \citet{grathwohl2018ffjord, dupont2019augmented, kelly2020learning, finlay2020train} have identified several problems with training implicit networks. Implicit Models come with extremely high training and inference costs making them not as scalable as explicit models like transformers~\citep{chen2016attention}, recurrent neural networks~\citep{elman1990finding, hochreiter1997long}, etc. While we can control the computational cost by choosing the number of layers in standard architectures, in implicit models, the number of neural network evaluations for a forward pass can depend on the number of steps of internal adaptive solvers. Accelerating forward pass is as simple as demanding the solver to ``take fewer steps.'' But this ``simple objective'' is non-differentiable. Several solutions have been proposed using proxy losses for this objective -- \citet{kelly2020learning, finlay2020train} use higher order derivatives for regularization of Neural Differential Equations, \citet{pal2021opening} proposed a ``zero-cost'' global regularization scheme for problems using adaptive differential equation solvers, and \citet{bai2021stabilizing} use jacobian regularization for Deep Equilibrium Models. Other alternate strategies have been learning new solvers~\citep{poli2020hypersolvers}, randomizing the timespan for integration to smoothen the learned dynamics~\citep{ghosh2020steer}.
+
+In this thesis, we will answer the following research questions:
+%
+% \begin{enumerate}[labelindent=\parindent,leftmargin=*,label=(\subscript{\textbf{RQ}}{{\textbf{\arabic*}}})]
+\begin{enumerate}
+  \item Can we design a \texttt{continuous variant of DEQs} that is equivalent to solving a Neural ODE? Why would \texttt{integrating a Neural ODE to infinity} accelerate the training?
+  \item Can we \texttt{accelerate training and inference of Neural Differential Equations} without constraining the models to use specific adjoint methods?
+\end{enumerate}
+%
+% This proposal is structured as: \Cref{sec:background} briefly describes advances in implicit neural networks, \Cref{sec:proposed_methods} provides an overview into the three main research questions -- Skip Deep Equilibrium Networks ($\textbf{RQ}_\textbf{1}$, \Cref{sec:skip-deqs}), Continuous Deep Equilibrium Networks ($\textbf{RQ}_\textbf{1}$, \Cref{sec:cont-deqs}), and Local Regularization of Neural Differential Equations ($\textbf{RQ}_\textbf{2}$, \Cref{sec:local-reg}). \Cref{sec:prelim_results} showcases preliminary results validating our methods, and \Cref{sec:timeline} provides a concrete timeline of milestones for the thesis.

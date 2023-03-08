@@ -282,7 +282,7 @@
 % Change the appearance of toc, lof, lot, etc.
 
 % Using tocloft, the toc can be formatted easily.
-\RequirePackage[titles, subfigure]{tocloft}
+\RequirePackage[titles]{tocloft}
 
 % Remove dots.
 \renewcommand{\cftdotsep}{\cftnodots}
