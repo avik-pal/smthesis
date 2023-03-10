@@ -1,10 +1,97 @@
-\chapter{Regularizing Internal Solver Heuristics of Neural Differential Equations}
+\chapter[Regularizing Internal Solver Heuristics of Neural DEs]{Regularizing Internal Solver Heuristics of Neural Differential Equations}
 \label{chapter:internal_solver_heuristics_regularized_neural_des}
+
+How many hidden layers should you choose in your recurrent neural network? \citet{chen2018neural} showed that the answer could be found automatically by using a continuous reformulation, the neural ordinary differential equation, and allowing an adaptive ODE solver to effectively choose the number of steps to take. Since then the idea was generalized to other domains such as stochastic differential equations \citep{liu2019neural, rackauckas2020universal} but one fact remained: \textit{solving a neural differential equation is expensive, \& training a neural differential equation is even more so}.
+
+In this thesis, we present a generally applicable method to force the neural differential equation training process to choose the least expensive option. We open the blackbox and show how using the numerical heuristics baked inside of these sophisticated differential equation solver codes allows for identifying the cheapest equations without requiring extra computation. However, ``opening the blackbox'' has several downsides -- they are \textit{harder to integrate into existing code-bases} and are \textit{more memory intensive}. Hence, we describe methods that exploit random sampling to leverage the benefits of ``opening the blackbox'' without actually requiring specialized training methods and the associated memory overhead.
 
 The contents of this chapter has appeared previously in the following pre-prints / publications:
 %
 \begin{enumerate}
-  \item Pal, A., Edelman, A. and Rackauckas, C., 2023. Locally Regularized Neural Differential Equations: Some Black Boxes Were Meant to Remain Closed!. arXiv preprint arXiv:2303.02262.~\citep{pal2023locally}
-  \item Pal, A., Ma, Y., Shah, V. and Rackauckas, C.V., 2021, July. Opening the Blackbox: Accelerating Neural Differential Equations by Regularizing Internal Solver Heuristics. In International Conference on Machine Learning (pp. 8325-8335). PMLR.~\citep{pal2021opening}
+  \item \citep{pal2023locally} Pal, A., Edelman, A. and Rackauckas, C., 2023. Locally Regularized Neural Differential Equations: Some Black Boxes Were Meant to Remain Closed!. arXiv preprint arXiv:2303.02262.
+  \item \citep{pal2021opening} Pal, A., Ma, Y., Shah, V. and Rackauckas, C.V., 2021, July. Opening the Blackbox: Accelerating Neural Differential Equations by Regularizing Internal Solver Heuristics. In International Conference on Machine Learning (pp. 8325-8335). PMLR.
 \end{enumerate}
 %
+
+\section{Opening the Blackbox: Global Regularization using Local Error \& Stiffness Estimates}
+\label{sec:global_regularization_using_local_error_and_stiffness_estimates}
+
+\Cref{sec:adaptive_time_stepping} describes how larger local error estimates $\eest$ lead to reduced step sizes and thus a higher overall cost in the neural ODE training and predictions. Given this, we propose regularizing the neural ODE training process by the total local error in order to learn neural ODEs with as large step sizes as possible. Thus we define the regularizing term:
+%
+\begin{equation}
+  \label{eq:reg_eest_global}
+  \left(\mathcal{R}_{E}\right)_g = \sum_j \left(\eest\right)_j \cdot |\dt_j|
+\end{equation}
+%
+summing over $j$ the time steps of the solution. This was done by accumulating the $\left(\eest\right)_j$ from the internals of the time stepping process at the end of each step. We note that this is similar to the regularization proposed in \citet{kelly2020learning}, namely:
+%
+\begin{equation}
+  \label{eq:reg_global_kelly}
+  \left(\mathcal{R}_{K}\right)_g = \int_{t_0}^{t_1} \left\|\frac{d^K z(t)}{dt^K}\right\| \dt
+\end{equation}
+%
+where integrating over the $K^{th}$ derivatives is proportional to the principle (largest) truncation error term of the Runge-Kutta method~\citep{hairer1}. However, this formulation requires high order automatic differentiation (which then is layered with reverse-mode automatic differentiation) which can be an expensive computation~\cite{zhang2008computing} while \Cref{eq:reg_eest_global} requires no differentiation. 
+
+Similarly, the stiffness estimates (\Cref{sec:automatic_stiffness_detection}) at each step can be summed as:
+%
+\begin{equation}
+  \label{eq:reg_stiffness_global}
+  \left(\mathcal{R}_{S}\right)_g = \sum_j \left(\sest\right)_j \cdot |\dt_j|
+\end{equation}
+%
+giving a computational heuristic for the total stiffness of the equation. Notably, both of these estimates $\left(\eest\right)_j$ and $\left(\sest\right)_j$ are already computed during the course of a standard explicit Runge-Kutta solution, making the forward pass calculation of the regularization term computationally free.
+
+
+\section{Adjoints of Internal Solver Heuristics}
+\label{sec:adjoints_of_internal_solver_heuristics}
+
+Notice that $\left(\eest\right)_j = \sum_{i = 1}^s \left(b_i - \tilde{b_i}\right) \cdot k_i$ cannot be constructed directly from the $\func{z}{t_j}$ trajectory of the ODE's solution. More precisely, the $k_i$ terms are not defined by the continuous ODE but instead by the chosen steps of the solver method. Continuous adjoint methods for neural ODEs~\citep{chen2018neural, zhuang2021mali} only define derivatives in terms of the ODE quantities. This is required in order exploit properties such as allowing different steps in reverse and reversibility for reduced memory, and in constructing solvers requiring fewer NFEs~\citep{kidger2020hey}. Indeed, computing the adjoint of each stage variable $k_i$ can be done, but is known as discrete sensitivity analysis and is known to be equivalent to automatic differentiation of the solver~\citep{zhang2014fatode}. Thus to calculate the derivative of the solution simultaneously to the derivatives of the solver states, we used direct automatic differentiation of the differential equation solvers for performing the experiments~\citep{innes2018don}. We note that discrete adjoints are known to be more stable than continuous adjoints~\citep{zhang2014fatode} and in the context of neural ODEs have been shown to stabilize the training process leading to better fits \citep{gholami2019anode,onken2020discretize}. While more memory intensive than some forms of the continuous adjoint, we note that checkpointing methods can be used to reduce the peak memory \citep{dauvergne2006data}. We note that this is equivalent to backpropagation of a fixed time step discretization if the step sizes are chosen in advance, and verify in the example code that no additional overhead is introduced.
+
+
+\section{Experimental Results for Global Regularization}
+\label{sec:experimental_results_global_regularized_neural_des}
+
+
+\section{Discussion on Global Regularization of Neural DEs}
+\label{sec:discussion_on_global_regularization_of_neural_des}
+
+Numerical analysis has had over a century of theoretical developments leading to efficient adaptive methods for solving many common nonlinear equations such as differential equations. Here we demonstrate that by using the knowledge embedded within the heuristics of these methods we can accelerate the training process of neural ODEs. 
+
+We note that on the larger sized PhysioNet and MNIST examples we saw significant speedups while on the smaller differential equation examples we saw only minor performance improvements. This showcases how the NFE becomes a better estimate of the total compute time as the cost of the ODE $f$ (and SDE $g$) increase when the model size increases.
+
+This result motivates efforts in differentiable programming~\cite{wang2018backpropagation, abadi2019simple, rackauckas2020generalized} which enables direct differentiation of solvers since utilizing the solver's heuristics may be crucial in the development of advanced techniques. This idea could be straightforwardly extended not only to other forms of differential equations, but also to other ``implicit layer'' machine learning methods. For example, Deep Equilibrium Models (DEQ)~\cite{bai_deep_2019} model the system as the solution to an implicit function via a nonlinear solver like Bryoden or Newton's method. Heuristics like the ratio of the residuals have commonly been used as a convergence criterion and as a work estimate for the difficulty of solving a particular nonlinear equation~\cite{wanner1996solving}, and thus could similarly be used to regularize for learning DEQs whose forward passes are faster to solve. Similarly, optimization techniques such as BFGS~\cite{kelley1999iterative} contain internal estimates of the Hessian which can be used to regularize the stiffness of ``optimization as layers'' machine learning architectures like OptNet~\cite{amos2017optnet}. However, in these cases we note that continuous adjoint techniques have a significant computational advantage over discrete adjoint methods because the continuous adjoint method can be computed directly at the point of the solution while discrete adjoints would require differentiating through the iteration process. Thus while a similar regularization would exist in these contexts, in the case of differential equations the continuous and discrete adjoints share the same computational complexity which is not the case in methods which iterate to convergence. Further study of these applications would be required in order to ascertain the effectiveness in accelerating the training process, though by extrapolation one may guess that at least the forward pass would be accelerated.
+
+\subsection{Limitations of Using Global Error and Stiffness Estimates}
+\label{subsec:limitations_of_using_global_error_and_stiffness_estimates}
+
+While these experiments have demonstrated major performance improvements, it is pertinent to point out the limitations of the method. One major point to note is that this only applies to learning neural ODEs for maps $z(0) \mapsto z(1)$ as is used in machine learning applications of the architecture \cite{chen2018neural}. Indeed, a neural ODE as an ``implicit layer'' for predictions in machine learning does not require identification of dynamical mechanisms. However, if the purpose is to learn the true governing dynamics a physical system from timeseries data, this form of regularization would bias the result, dampening higher frequency responses leading to an incorrect system identification. Approaches which embed neural networks into solvers could be used in such cases \cite{shen2020deep,poli2020hypersolvers}. Indeed we note that such Hypereuler approaches could be combined with the ERNODE regularization on machine learning prediction problems, which could be a fruitful avenue of research. Lastly, we note that while either the local error and stiffness regularization was effective on each chosen equation, neither was effective on all equations and at this time there does not seem to be a clear a priori indicator as to which regularization is necessary for a given problem. While it seems the error regularization was more effective on the image classification tasks while the stiffness regularization was more effective on the time series task, we believe more experiments will be required in order to ascertain whether this is a common phenomena, possibly worthy of theoretical investigation.
+
+To summarize:
+%
+\begin{enumerate}
+    \item Global Regularization relies on discrete sensitivity analysis, which is \textit{more memory intensive}.
+    \item Global Regularization depends on AD tooling to support dynamic compute graphs in an efficient way, making it \textit{hard to incorporate into existing code-bases}.
+\end{enumerate}
+%
+To get around these limitations, we developed a new technique using local sampling of error estimates at specific time points, rather than globally over the full interval.
+
+\section{Randomized Local Regularization: Overcoming the shortcomings of Global Regularization}
+\label{sec:randomized_local_regularization_overcoming_the_shortcomings_of_global_regularization}
+
+\subsection{Unbiased Sampling of Local Error Estimates}
+\label{subsec:unbiased_sampling_of_local_error_estimates}
+
+\subsection{Biased Sampling of Local Error Estimates}
+\label{subsec:biased_sampling_of_local_error_estimates}
+
+\section{Adjoint for Local Regularized Neural Differential Equations}
+\label{sec:adjoint_for_local_regularized_neural_differential_equations}
+
+\section{Experimental Results for Local Regularization}
+\label{sec:experimental_results_local_regularized_neural_des}
+
+\section{Discussion on Local Regularization of Neural DEs}
+\label{sec:discussion_on_local_regularization_of_neural_des}
+
+\section{Conclusion}
+\label{sec:conclusion}

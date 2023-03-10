@@ -94,7 +94,6 @@
 \newcommand{\SgIntPageNumFormat}{\bfseries}
 
 
-
 % -----------------------------------------------------------------------------
 % C A P T I O N S
 % 
@@ -132,7 +131,7 @@
 {
 	% For adding extra blank page, if necessary, after chapter.
 	\RequirePackage{emptypage}
-	
+
 	% Define a command to leave a blank page. This is used in frontmatter to add 
 	% an empty page between ack, abstract, toc, lof and lot.
 	\newcommand{\SgIntClearDoublePage}{\clearpage{\pagestyle{empty}\cleardoublepage}}
@@ -155,8 +154,8 @@
 % By default Latex centers images vertically on a float page.
 % Modify Latex internal variables so that figures are placed from top.
 \makeatletter
-    \setlength{\@fptop}{0.25cm}
-    \setlength{\@fpsep}{1.00cm}
+\setlength{\@fptop}{0.25cm}
+\setlength{\@fpsep}{1.00cm}
 \makeatother
 
 \setlength{\textfloatsep}{1.5cm} % Set the distance between a float and text.
@@ -208,10 +207,10 @@
 \newenvironment{SgAlgorithm}[1][t]
 {%
 	\begin{algorithm2e}[#1]
-    \linespread{1.3} % Set the line spacing to one and half.
-    \selectfont      % The linespread is effective only after selectfont.%
-}
-{%
+		\linespread{1.3} % Set the line spacing to one and half.
+		\selectfont      % The linespread is effective only after selectfont.%
+		}
+		{%
 	\end{algorithm2e}
 }
 
@@ -251,7 +250,7 @@
 % Define header consisting of Chapter #. Chapter_Name on left side and 
 % page number on right side.
 % \nouppercase is used on left header to force bibliography in lowercase.
-\fancyhead{} 
+\fancyhead{}
 \fancyhead[L]{\nouppercase{\SgIntHeaderFormat\leftmark}}
 \fancyhead[R]{\SgIntPageNumFormat\thepage}
 \renewcommand{\headrulewidth}{1pt}
@@ -264,14 +263,14 @@
 % Define header and footer for plain pages.
 \fancypagestyle{plain}
 {%
-    % Disable header.
-    \fancyhead{}
-    \renewcommand{\headrulewidth}{0pt}
-    
-    % Footer contains the page number on right side.
-    \fancyfoot{}
-    \fancyfoot[R]{\SgIntPageNumFormat\thepage}
-    \renewcommand{\footrulewidth}{0pt}
+	% Disable header.
+	\fancyhead{}
+	\renewcommand{\headrulewidth}{0pt}
+
+	% Footer contains the page number on right side.
+	\fancyfoot{}
+	\fancyfoot[R]{\SgIntPageNumFormat\thepage}
+	\renewcommand{\footrulewidth}{0pt}
 }
 
 
@@ -290,7 +289,7 @@
 % Remove dots from list of algorithms.
 % This is necessary because we use algorithm2e which mananges its own list of algorithms.
 \makeatletter
-	\renewcommand{\@dotsep}{5000}
+\renewcommand{\@dotsep}{5000}
 \makeatother
 
 % Format chapter entries differently in toc.
@@ -344,40 +343,40 @@
 % Adjust the spacing between titles and surrounding matter.
 \RequirePackage{etoolbox}
 \makeatletter
-	% Reduce the space between chapter title and text.
-	\patchcmd{\DOTI}{\vskip 40\p@}{\vskip 20\p@}{}{}
-	\patchcmd{\DOTIS}{\vskip 40\p@}{\vskip 20\p@}{}{}% for unnumbered chapters
-	
-	% http://tex.stackexchange.com/questions/13357/fncychap-package-reduce-vertical-gap-space-between-header-and-chapter-heading
-	% Reduce the spacing between top margin and chapter title.
-	\renewcommand*{\@makechapterhead}[1]
+% Reduce the space between chapter title and text.
+\patchcmd{\DOTI}{\vskip 40\p@}{\vskip 20\p@}{}{}
+\patchcmd{\DOTIS}{\vskip 40\p@}{\vskip 20\p@}{}{}% for unnumbered chapters
+
+% http://tex.stackexchange.com/questions/13357/fncychap-package-reduce-vertical-gap-space-between-header-and-chapter-heading
+% Reduce the spacing between top margin and chapter title.
+\renewcommand*{\@makechapterhead}[1]
+{%
+	\vspace*{10\p@}
 	{%
-		\vspace*{10\p@}
-		{%
-			\parindent \z@ \raggedright \normalfont
-			\ifnum \c@secnumdepth >\m@ne
-				\if@mainmatter % Fix for frontmatter, mainmatter, and backmatter 040920
-					\DOCH
-				\fi
-			\fi    
-			\interlinepenalty\@M    
-			\if@mainmatter     % Fix for frontmatter, mainmatter, and backmatter 060424
-				\DOTI{#1}%
-			\else%      
-				\DOTIS{#1}%
+		\parindent \z@ \raggedright \normalfont
+		\ifnum \c@secnumdepth >\m@ne
+			\if@mainmatter % Fix for frontmatter, mainmatter, and backmatter 040920
+				\DOCH
 			\fi
-		}
+		\fi
+		\interlinepenalty\@M
+		\if@mainmatter     % Fix for frontmatter, mainmatter, and backmatter 060424
+			\DOTI{#1}%
+		\else%      
+			\DOTIS{#1}%
+		\fi
 	}
-	
-	% For the case \chapter*:
-	\renewcommand*{\@makeschapterhead}[1]
+}
+
+% For the case \chapter*:
+\renewcommand*{\@makeschapterhead}[1]
+{%
+	\vspace*{10\p@}%
 	{%
-		\vspace*{10\p@}%
-		{%
-			\parindent \z@ \raggedright \normalfont 
-			\interlinepenalty\@M \DOTIS{#1} \vskip 10\p@
-		}
+		\parindent \z@ \raggedright \normalfont
+		\interlinepenalty\@M \DOTIS{#1} \vskip 10\p@
 	}
+}
 \makeatother
 
 
@@ -416,9 +415,9 @@
 {%
 	\hypersetup
 	{%
-		pdfauthor   = \SgIntAuthor, 
-		pdftitle    = \SgIntTitle, 
-		pdfsubject  = \SgIntSubject, 
+		pdfauthor   = \SgIntAuthor,
+		pdftitle    = \SgIntTitle,
+		pdfsubject  = \SgIntSubject,
 		pdfkeywords = \SgIntKeywords
 	}
 }
@@ -523,47 +522,47 @@
 		\large{\SgIntMakeUpperCase{\SgIntUniversity}}\\
 		\large{\SgIntMakeUpperCase{\SgIntDepartment}}\\
 		\vspace{0.25in}
-		
+
 		\large{\SgIntMakeUpperCase{Thesis in Partial Fulfillment of the Requirements}}\\
-% 		\large{\SgIntMakeUpperCase{of the Requirements for the Degree of}}\\
+		% 		\large{\SgIntMakeUpperCase{of the Requirements for the Degree of}}\\
 		\large{\SgIntMakeUpperCase{for the Degree of \SgIntDegree}}\\
 		\vspace{0.25in}
 	\end{center}
-	
+
 	% \large{Title: \SgIntMakeUpperCase{\SgIntTitle}}\\
 	\large{Title: \SgIntMakeUpperCase{\SgIntTitleSplitOne}}\\
 	\ifthenelse{\equal{\SgIntTitleSplitTwo}{}}
-    {
-    }
-    {
-	    \large{\phantom{Title:} \SgIntMakeUpperCase{\SgIntTitleSplitTwo}}\\
-    }
+	{
+	}
+	{
+		\large{\phantom{Title:} \SgIntMakeUpperCase{\SgIntTitleSplitTwo}}\\
+	}
 	\large{Submitted By: \SgIntMakeUpperCase{\SgIntAuthor}}\\
-    \large{\phantom{Submitted By:} \SgIntMakeUpperCase{\SgIntAddrLineOne}}\\
-    \large{\phantom{Submitted By:} \SgIntMakeUpperCase{\SgIntAddrLineTwo}}\\
+	\large{\phantom{Submitted By:} \SgIntMakeUpperCase{\SgIntAddrLineOne}}\\
+	\large{\phantom{Submitted By:} \SgIntMakeUpperCase{\SgIntAddrLineTwo}}\\
 
 	\large{Signature of Author: \hrulefill}\\
 	\large{Date of Submission: \SgIntMakeUpperCase{\SgIntSubmissionDate}}\\
-% 	\large{Expected Date of Submission: \SgIntMakeUpperCase{\SgIntCompletionDate}}\\
+	% 	\large{Expected Date of Submission: \SgIntMakeUpperCase{\SgIntCompletionDate}}\\
 	\large{Laboratory where thesis was done: \SgIntMakeUpperCase{\SgIntLab}}
 	\vspace{0.15in}
-	
+
 	\large{Brief Problem Statement:}
-	
+
 	\large{\SgIntBriefProblemStatement}
-	
+
 	\vspace{0.15in}
-	
+
 	\large{Supervisor Agreement:}
-        The program outlined in this thesis is adequate for a \SgIntDegree{} thesis. The supplies and facilities required are available, and I am willing to supervise the research and evaluate the thesis report.
-	
+	The program outlined in this thesis is adequate for a \SgIntDegree{} thesis. The supplies and facilities required are available, and I am willing to supervise the research and evaluate the thesis report.
+
 	\vspace{0.5in}
-	
+
 	\hrulefill
-	
+
 	\hspace*{\fill} \large{\SgIntMakeUpperCase{\SgIntAdvisor, \SgIntAdvisorRole}}\\
 	\hspace*{\fill} \large{\SgIntMakeUpperCase{\SgIntAdvisorDept}}
-	
+
 	\SgIntClearDoublePage
 }
 
@@ -587,9 +586,9 @@
 	\end{center}
 	\vspace{0.5cm}
 	\begin{quote}
-}
-{%
-    \end{quote}
+		}
+		{%
+	\end{quote}
 	\SgIntClearDoublePage
 }
 
@@ -603,18 +602,34 @@
 % i.e. tabbed in at both sides, and on its own page.
 \renewenvironment{abstract}
 {%
-    \thispagestyle{plain}
+	\thispagestyle{plain}
 	\begin{center}
 		\vspace*{1.5cm}
 		{\Large\bfseries Abstract}
 	\end{center}
 	\vspace{0.5cm}
 	\begin{quote}
-}
-{%
-    \end{quote}
+		}
+		{%
+	\end{quote}
 	\SgIntClearDoublePage
 }
+
+% -----------------------------------------------------------------------
+% SECTION HEADINGS: CAPITALIZE
+% 
+\RequirePackage{titlesec}
+
+\makeatletter
+
+\titleformat{\section}{\normalfont\Large\scshape\bfseries}{\thesection}{.5em}{}[]
+
+\titleformat{\subsection}{\normalfont\large\scshape\bfseries}{\thesubsection}{.5em}{}[]
+
+\titleformat{\subsubsection}{\normalfont\normalsize\scshape\bfseries}{\thesubsubsection}{.5em}{}[]
+
+\makeatother
+
 
 
 
@@ -626,7 +641,7 @@
 % remainder of thesis (arabic, starting at 1).
 \newenvironment{frontmatter}
 {%
- 	\setcounter{page}{1}
+	\setcounter{page}{1}
 	\renewcommand{\thepage}{\roman{page}}
 }
 {%
