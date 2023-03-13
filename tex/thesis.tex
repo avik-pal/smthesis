@@ -1,7 +1,8 @@
 \documentclass{../common/thesis}
 
 \usepackage[T1]{fontenc}
-\usepackage[sfdefault]{roboto}
+% \usepackage[sfdefault]{roboto}
+\usepackage{libertine}
 
 % PDF and title properties.
 \SgSetTitle{On Efficient Training \& Inference of Neural Differential Equations}
@@ -39,7 +40,7 @@
   \SgAddToc%  Table of contents.
   \SgAddLof%  List of figures.
   \SgAddLot%  List of tables.
-  \SgAddLoa%  List of algorithms.
+  % \SgAddLoa%  List of algorithms.
 \end{frontmatter}
 
 % Introduction
@@ -61,10 +62,11 @@
 \input{content/chapters/internal_solver_heuristics_neural_des}
 
 % Auxiliary Contributions
-\part{AUXILLARY CONTRIBUTIONS}  % TODO: Change this part name
-\label{part:auxiliary_contributions}
+\part{OPEN SOURCE SOFTWARES}
+\label{part:open_source_software}
 
-\input{content/chapters/softwares.tex}
+\input{content/softwares/lux.tex}
+\input{content/softwares/deep_equilibrium_networks.tex}
 
 % Conclusion & Future Work
 \part{CONCLUSIONS AND FUTURE WORK}
