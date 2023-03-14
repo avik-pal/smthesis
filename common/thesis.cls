@@ -318,7 +318,7 @@
 	\newpage
 	\phantomsection % Requires hyperref; this is to fix the link.
 	\addcontentsline{toc}{section}{\numberline{}\hspace{-.35in}{\SgIntTocSectionFormat{}List of Algorithms}}
-	\listofalgorithmes % Note an extra e, it is required because we use algorithm2e.
+	\listofalgorithms % Note an extra e, it is required because we use algorithm2e.
 	\SgIntClearDoublePage
 }
 
