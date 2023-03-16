@@ -516,52 +516,40 @@
 \newcommand{\SgAddTitle}{%
 	\thispagestyle{empty}
 	\begin{center}
-		\vspace*{-1.0in}
+		% \vspace*{-1.0in}
 		\Large{\bf{\SgIntMakeUpperCase{\SgIntTitle}}}\\
 		\vspace{0.25in}
-		\large{\SgIntMakeUpperCase{\SgIntUniversity}}\\
-		\large{\SgIntMakeUpperCase{\SgIntDepartment}}\\
+		\large{By}\\
+		\vspace{0.15in}
+		\large{\SgIntMakeUpperCase{\SgIntAuthor}}\\
+		\vspace{0.10in}
+		\large{\SgIntMakeUpperCase{B.Tech., Indian Institute of Technology Kanpur (2017)}}\\
 		\vspace{0.25in}
 
-		\large{\SgIntMakeUpperCase{Thesis in Partial Fulfillment of the Requirements}}\\
-		% 		\large{\SgIntMakeUpperCase{of the Requirements for the Degree of}}\\
-		\large{\SgIntMakeUpperCase{for the Degree of \SgIntDegree}}\\
-		\vspace{0.25in}
+		\large{Submitted to the \SgIntDepartment in Partial}\\
+		\large{Fulfillment of the Requirements for the Degree of}\\
+		\vspace{0.15in}
+		\large{\SgIntMakeUpperCase{\SgIntDegree}}\\
+		\large{at the}\\
+		\large{\SgIntMakeUpperCase{Massachusetts Institute of Technology}}\\
+		\vspace{0.15in}
+		\large{\SgIntMakeUpperCase{June 2023}}\\
+		\vspace{0.4in}
+		\large{\copyright 2023 Massachusetts Institute of Technology. All rights reserved.}
+		\vspace{0.4in}
 	\end{center}
 
-	% \large{Title: \SgIntMakeUpperCase{\SgIntTitle}}\\
-	\large{Title: \SgIntMakeUpperCase{\SgIntTitleSplitOne}}\\
-	\ifthenelse{\equal{\SgIntTitleSplitTwo}{}}
-	{
-	}
-	{
-		\large{\phantom{Title:} \SgIntMakeUpperCase{\SgIntTitleSplitTwo}}\\
-	}
-	\large{Submitted By: \SgIntMakeUpperCase{\SgIntAuthor}}\\
-	\large{\phantom{Submitted By:} \SgIntMakeUpperCase{\SgIntAddrLineOne}}\\
-	\large{\phantom{Submitted By:} \SgIntMakeUpperCase{\SgIntAddrLineTwo}}\\
-
-	\large{Signature of Author: \hrulefill}\\
-	\large{Date of Submission: \SgIntMakeUpperCase{\SgIntSubmissionDate}}\\
-	% 	\large{Expected Date of Submission: \SgIntMakeUpperCase{\SgIntCompletionDate}}\\
-	\large{Laboratory where thesis was done: \SgIntMakeUpperCase{\SgIntLab}}
-	\vspace{0.15in}
-
-	\large{Brief Problem Statement:}
-
-	\large{\SgIntBriefProblemStatement}
-
-	\vspace{0.15in}
-
-	\large{Supervisor Agreement:}
-	The program outlined in this thesis is adequate for a \SgIntDegree{} thesis. The supplies and facilities required are available, and I am willing to supervise the research and evaluate the thesis report.
-
-	\vspace{0.5in}
-
-	\hrulefill
-
-	\hspace*{\fill} \large{\SgIntMakeUpperCase{\SgIntAdvisor, \SgIntAdvisorRole}}\\
-	\hspace*{\fill} \large{\SgIntMakeUpperCase{\SgIntAdvisorDept}}
+	\large{Authored By: \phantom{xxxxxx} \SgIntAuthor}\\
+	\large{\phantom{Authored By: xxxxxx} \SgIntDepartment}\\
+	\large{\phantom{Authored By: xxxxxx} \SgIntCompletionDate}\\
+	\vspace{0.05in}\\
+	\large{Certified By: \phantom{xxxxxxx} \SgIntAdvisor}\\
+	\large{\phantom{Certified By: xxxxxxx} Professor of Mathematics}\\
+	\large{\phantom{Certified By: xxxxxxx} Thesis Supervisor}\\
+	\vspace{0.05in}\\
+	\large{Accepted By: \phantom{xxxxxxx} Leslie A. Kolodziejski}\\
+	\large{\phantom{Accepted By: xxxxxxx} Professor of Electrical Engineering and Computer Science}\\
+	\large{\phantom{Accepted By: xxxxxxx} Chair, Department Committee on Graduate Students}\\
 
 	\SgIntClearDoublePage
 }
