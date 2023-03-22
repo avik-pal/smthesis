@@ -69,6 +69,27 @@ While these experiments have demonstrated major performance improvements, it is 
 \section{Randomized Local Regularization: Overcoming the shortcomings of Global Regularization}
 \label{sec:randomized_local_regularization_overcoming_the_shortcomings_of_global_regularization}
 
+\begin{table}[t]
+  \centering
+  \adjustbox{max width=\textwidth}{
+    \centering
+    \begin{tabular}{lcc}
+      \toprule
+      \thead{Sensitivity Algorithm} & \thead{Memory Requirement} & \thead{Memory Requirement with Local Reularization} \\
+      \midrule
+      Backsolve Adjoint \tocite & $\bigO{s}$ & $\bigO{s + \mathrm{stages}}$ \\
+      Backsolve Adjoint with Checkpointing \tocite & $\bigO{s \times c}$ & $\bigO{s \times c  + \mathrm{stages}}$ \\
+      Interpolating Adjoint \tocite & $\bigO{s \times t}$ & $\bigO{s \times t  + \mathrm{stages}}$\\
+      Interpolating Adjoint with Checkpointing \tocite & $\bigO{s \times c}$ & $\bigO{s \times c + \mathrm{stages}}$ \\
+      Quadrature Adjoint \tocite & $\bigO{\left(s + p\right) \times t}$ & $\bigO{\left(s + p\right) \times t + \mathrm{stages}}$ \\
+      Direct Reverse Mode Differentiation & $\bigO{s \times t \times \mathrm{stages}}$ & $\bigO{\left(s \times t + 1\right) \times \mathrm{stages}}$ \\
+      \bottomrule
+    \end{tabular}
+  }
+  \caption{\textbf{Memory Requirements for various Sensitivity Algorithms for ODEs with Local Regularization}}
+  \label{tab:memory_requirements_sensitivity_analysis_odes_with_local_reg}
+\end{table}
+
 In \Cref{subsec:limitations_of_using_error_and_stiffness_estimates}, we discussed the downsides of using global regularization with local error estimates. To summarize:
 %
 \begin{enumerate}

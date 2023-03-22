@@ -54,7 +54,7 @@ The forward Euler method is one of the simplest methods to numerically solve an 
 If we ignore the quadratic and higher order terms, we get the forward Euler method~\citep{euler1824institutionum}:
 %
 \begin{align}
-  & \func{z}{t + \dt} = \func{z}{t} + \dt \cdot \left. \frac{\partial z}{\partial t} \right|_{t}\\
+           & \func{z}{t + \dt} = \func{z}{t} + \dt \cdot \left. \frac{\partial z}{\partial t} \right|_{t} \\
   \implies & z_{n + 1} = z_n + \dt \cdot \func{f}{z_n, p, t_n}
 \end{align}
 %
@@ -66,8 +66,8 @@ This method is extremely simple however, has an extremely high local truncation 
 Runge-Kutta (RK) Methods~\citep{runge1895numerische, kutta1901beitrag} are widely used to approximate the solutions of ODEs numerically. Given a tableau of coefficients $\left\{A, c, b\right\}$, these methods combine $s$ stages to obtain the estimate at $t + \dt$.
 %
 \begin{align}
-    & k_s = \func{f}{t + c_s \cdot \dt, z(t) + \sum_{i = 1}^{s - 1} a_{si} \cdot k_i}\\
-    & z(t + dt) = z(t) + \dt \cdot \left( \sum_{i = 1}^s b_i \cdot k_i \right)
+   & k_s = \func{f}{t + c_s \cdot \dt, z(t) + \sum_{i = 1}^{s - 1} a_{si} \cdot k_i} \\
+   & z(t + dt) = z(t) + \dt \cdot \left( \sum_{i = 1}^s b_i \cdot k_i \right)
 \end{align}
 %
 \citet{tsitouras2011runge} presented a tableau of coefficients for a 6-stage RK method of order $5 (4)$. We have found Tsit5 to be an excellent default for most ODEs (including Neural ODEs) at lower tolerances. \todo{pull up some results from SciMLBenchmarks}
@@ -111,7 +111,7 @@ This method has a local truncation error of $\bigO{\dt^3}$. Additionally, since 
 Adaptive solvers need to maximize the step size ($\dt$) while keeping the error estimate below the user-specified tolerances, i.e., they need to satisfy:
 %
 \begin{equation}
-    \eest \leq \atol + \texttt{max}\left( |z(t)|, |z(t + \dt)|\right) \cdot \rtol
+  \eest \leq \atol + \texttt{max}\left( |z(t)|, |z(t + \dt)|\right) \cdot \rtol
 \end{equation}
 %
 where $\eest$ is the local error estimate. Adaptive solvers utilize an additional linear combiner $\Tilde{b}_i$ to get an alternate solution, typically with one order less convergence~\citep{wanner1996solving, fehlberg1968classical, dormand1980family,tsitouras2011runge}.
@@ -123,18 +123,18 @@ where $\eest$ is the local error estimate. Adaptive solvers utilize an additiona
 A classic result from Richardson extrapolation shows that $\eest = \| \Tilde{z}(t + \dt) - z(t + \dt) \|$ is an estimate of the local truncation error~\citep{hairer1, ascher1998computer}. The new step size is determined using the following:
 %
 \begin{equation}
-    q = \left\| \frac{\eest}{\atol + \texttt{max}\left( |z(t)|, |z(t + \dt)|\right) \cdot \rtol} \right\|
+  q = \left\| \frac{\eest}{\atol + \texttt{max}\left( |z(t)|, |z(t + \dt)|\right) \cdot \rtol} \right\|
 \end{equation}
 %
 \begin{itemize}
-    \item If $q < 1$, $\dt$ is accepted.
-    \item Otherwise, it is rejected and reduced. A standard PI controller proposes the new step size to be:
-    %
-    \begin{equation}
-        dt_{new} = \eta \cdot q_{n - 1}^\alpha \cdot q_{n}^\beta \cdot dt
-    \end{equation}
-    %
-    where $\eta$ is the safety factor, $q_{n - 1}$ is the error proportion of the previous step, and $(\alpha, \beta)$ are tunable PI-gain hyperparameters~\cite{wanner1996solving}. 
+  \item If $q < 1$, $\dt$ is accepted.
+  \item Otherwise, it is rejected and reduced. A standard PI controller proposes the new step size to be:
+        %
+        \begin{equation}
+          dt_{new} = \eta \cdot q_{n - 1}^\alpha \cdot q_{n}^\beta \cdot dt
+        \end{equation}
+        %
+        where $\eta$ is the safety factor, $q_{n - 1}$ is the error proportion of the previous step, and $(\alpha, \beta)$ are tunable PI-gain hyperparameters~\cite{wanner1996solving}.
 \end{itemize}
 
 We defer the discussion of error estimation schemes for stochastic RK integrators to  \citet{rackauckas2017adaptive, rackauckas2020sosri}.
@@ -146,6 +146,27 @@ We defer the discussion of error estimation schemes for stochastic RK integrator
 
 \section{Sensitivity Analysis of ODEs}
 \label{sec:sensitivity_analysis_odes}
+
+\begin{table}[t]
+  \centering
+  \adjustbox{max width=\textwidth}{
+    \centering
+    \begin{tabular}{lcc}
+      \toprule
+      \thead{Sensitivity Algorithm} & \thead{Memory Requirement} & \thead{Memory Requirement with Checkpointing} \\
+      \midrule
+      Backsolve Adjoint \tocite & $\bigO{s}$ & $\bigO{s \times c}$ \\
+      Interpolating Adjoint \tocite & $\bigO{s \times t}$ & $\bigO{s \times c}$ \\
+      Quadrature Adjoint \tocite & $\bigO{\left(s + p\right) \times t}$ & - \\
+      Direct Reverse Mode Differentiation & $\bigO{s \times t \times \mathrm{stages}}$ & - \\
+      \bottomrule
+    \end{tabular}
+  }
+  \caption{\textbf{Memory Requirements for various Sensitivity Algorithms for ODEs}}
+  \label{tab:memory_requirements_sensitivity_analysis_odes}
+\end{table}
+
+\todo{add notation information}
 
 \subsection{Continuous Sensitivity Analysis}
 \label{subsec:continuous_sensitivity_analysis_odes}
