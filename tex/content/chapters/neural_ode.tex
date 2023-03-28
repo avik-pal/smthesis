@@ -67,7 +67,7 @@ Runge-Kutta (RK) Methods~\citep{runge1895numerische, kutta1901beitrag} are widel
 %
 \begin{align}
    & k_s = \func{f}{t + c_s \cdot \dt, z(t) + \sum_{i = 1}^{s - 1} a_{si} \cdot k_i} \\
-   & z(t + dt) = z(t) + \dt \cdot \left( \sum_{i = 1}^s b_i \cdot k_i \right)
+   & z(t + dt) = z(t) + \dt \cdot \left( \sum_{i = 1}^s b_i \cdot k_i \right) \label{eq:rk_method_tsit5}
 \end{align}
 %
 \citet{tsitouras2011runge} presented a tableau of coefficients for a 6-stage RK method of order $5 (4)$. We have found Tsit5 to be an excellent default for most ODEs (including Neural ODEs) at lower tolerances. \todo{pull up some results from SciMLBenchmarks}
@@ -144,6 +144,20 @@ We defer the discussion of error estimation schemes for stochastic RK integrator
 \section{Automatic Stiffness Detection}
 \label{sec:automatic_stiffness_detection}
 
+While there is no precise definition of stiffness, the definition used in practice is ``stiff equations are problems for which explicit methods don't work''~\citep{wanner1996solving,shampine1979user}. A simplified stiffness index is given by:
+%
+\begin{equation}
+    S = \text{max}\|\texttt{Re}(\lambda_i)\|
+\end{equation}
+%
+where $\lambda_i$ are the eigenvalues of the local Jacobian matrix. We note that various measures of stiffness have been introduced over the years, all being variations of conditioning of the pseudo-spectra~\citep{shampine2007stiff, higham1993stiffness}. The difficulty in defining a stiffness metric is that in each case, some stiff systems like the classic Robertson chemical kinetics or excited Van der Pol equation may violate the definition, meaning all such definitions are (useful) heuristics. In particular, it was shown that for explicit Runge-Kutta methods satisfying $c_x = c_y$ for some internal step, the term
+%
+\begin{equation}
+    \|\lambda\| \approx \left\Vert\frac{ \func{f}{t + c_x \cdot \dt,\sum_{i=1}^{s} a_{xi}} - \func{f}{t + c_y \cdot \dt,\sum_{i=1}^{s} a_{yi}}}{\sum_{i=1}^{s} a_{xi} - \sum_{i=1}^{s} a_{yi}}\right\Vert
+\end{equation}
+%
+serves as an estimate to $S$~\citep{shampine1977stiffness}. Since each of these terms are already required in the Runge-Kutta updates of \Cref{eq:rk_method_tsit5}, this gives a computationally-free estimate. This estimate is thus found throughout widely used explicit Runge-Kutta implementations, such as by the dopri method (found in suites like SciPy and Octave) to automatically exit when stiffness is detected~\citep{wanner1996solving}, and by switching methods which automatically change explicit Runge-Kutta methods to methods more suitable for stiff equations~\citep{rackauckas2019confederated}.
+
 \section{Sensitivity Analysis of ODEs}
 \label{sec:sensitivity_analysis_odes}
 
@@ -178,10 +192,17 @@ We defer the discussion of error estimation schemes for stochastic RK integrator
 \section{Neural Ordinary Differential Equations}
 \label{sec:neural_odes}
 
-% \section{Not All ODE Solvers are Created Equal}
-% \label{sec:not_all_solvers_are_created_equal}
+Neural Ordinary Differential Equations are Implicit Neural Networks that use a neural network to parameterize the dynamics of the ODE: Mathematically, this is given by:
+%
+\begin{align}
+  \frac{dz}{dt} &= \func{f}{z(t), \theta, t} \qquad z(t_0) = z_0\\
+  \func{z}{t_1} &= \func{z}{t_0} + \int_{t_0}^{t_1} \func{f}{z(t), \theta, t} \, \dt
+\end{align}
+%
+where $f$ is an Explicit Neural Network, $\theta$ are the parameters of the neural network, and we want to solve for the dynamics $\func{z}{t}$ in $t \in [t_0, t_1]$. Typically, $z_0$ is specified as the input from the previous layers. Then we can use sensitivity analysis (\Cref{sec:sensitivity_analysis_odes}) to compute $\left. v^T \frac{\partial \func{z}{t}}{\partial z_0} \right|_{t = t_1}$ and $\left. v^T \frac{\partial \func{z}{t}}{\partial g} \right|_{t = t_1}$ (where $v^T$ is obtained from back-propagation on the succeeding layers) and train the neural network end-to-end using gradient descent.
 
-% \todo{Show a plot from SciMLBenchmarks.jl to emphasize why we need multiple kinds of solvers even for Neural ODEs.}
+\subsection{Discussion on Sensitivity Analysis: Optimize-then-Discretize vs Discretize-then-Optimize}
+\label{subsec:discussion_on_sensitivity_analysis_optimize_then_discretize_vs_discretize_then_optimize}
 
 \section{Common Applications of Neural ODEs}
 \label{sec:neural_odes_applications}
@@ -203,5 +224,19 @@ We defer the discussion of error estimation schemes for stochastic RK integrator
 \subsection{Taylor Neural ODE}
 
 \subsection{STEER}
+\label{subsec:steer}
+
+\todo{write about the need to regularize Neural ODEs}
+
+Neural ODEs tend to learn more complex dynamics as the training progresses. Since the complexity of the dynamics and time taken by the solver are intrinsically related, the training and inference time grows over training. \citet{ghosh2020steer} stochastically perturb the ending integration time-point of the ODE to allow the Neural ODE to learn simpler dynamics. During training, they reformulate the problem as:
+%
+\begin{align}
+  \func{z}{t_1} &= \func{z}{t_0} + \int_{t_0}^{T} \func{f}{z(t), \theta, t} \, \dt\\
+  \texttt{where } T &\sim \mathcal{U}(t_1 - b, t_1 + b)\\
+  \phantom{where } b &< t_1 - t_0
+\end{align}
+%
+
+\todo{some results overview if space permits}
 
 \subsection{Hypersolvers for Neural ODEs}
