@@ -34,7 +34,7 @@
 
 % -----------------------------------------------------------------------------
 % Define font size. The valid values are [11pt] and 12pt.
-\define@choicekey*[Sg]{PhDThesis}{fontsize}{11pt,12pt}[11pt]{\def \SgIntFontSize{#1}}
+\define@choicekey*[Sg]{PhDThesis}{fontsize}{11pt,12pt,13pt,14pt,15pt}[14pt]{\def \SgIntFontSize{#1}}
 \setkeys[Sg]{PhDThesis}{fontsize}
 
 % -----------------------------------------------------------------------------
