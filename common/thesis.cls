@@ -526,7 +526,7 @@
 		\large{\SgIntMakeUpperCase{B.Tech., Indian Institute of Technology Kanpur (2017)}}\\
 		\vspace{0.25in}
 
-		\large{Submitted to the \SgIntDepartment in Partial}\\
+		\large{Submitted to the \SgIntDepartment~in Partial}\\
 		\large{Fulfillment of the Requirements for the Degree of}\\
 		\vspace{0.15in}
 		\large{\SgIntMakeUpperCase{\SgIntDegree}}\\

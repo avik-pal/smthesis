@@ -8,13 +8,13 @@ Implicit layer methods, such as Neural ODEs and Deep Equilibrium models~\citep{c
 Our main contributions include\footnote{Our code is publicly available at \url{https://github.com/SciML/DeepEquilibriumNetworks.jl}}:
 %
 \begin{enumerate}
-  \item An improved DEQ architecture (Skip-DEQ) that uses an additional neural network to predict better initial conditions.
+    \item An improved DEQ architecture (Skip-DEQ) that uses an additional neural network to predict better initial conditions.
 
-  \item A regularization scheme (Skip Regularized DEQ) incentivizes the DEQ to learn simpler dynamics and leads to faster training and prediction. Notably, this does not require nested automatic differentiation and thus is considerably less computationally expensive than other published techniques.
+    \item A regularization scheme (Skip Regularized DEQ) incentivizes the DEQ to learn simpler dynamics and leads to faster training and prediction. Notably, this does not require nested automatic differentiation and thus is considerably less computationally expensive than other published techniques.
 
-  \item A continuous formulation for DEQs as an infinite time neural ODE, which paradoxically accelerates the backward pass over standard neural ODEs by replacing the continuous adjoints with a simple linear system.
+    \item A continuous formulation for DEQs as an infinite time neural ODE, which paradoxically accelerates the backward pass over standard neural ODEs by replacing the continuous adjoints with a simple linear system.
 
-  \item We demonstrate the seamless combination of Continuous DEQs with Skip DEQs to create a drop-in replacement for Neural ODEs without incurring a high training cost.
+    \item We demonstrate the seamless combination of Continuous DEQs with Skip DEQs to create a drop-in replacement for Neural ODEs without incurring a high training cost.
 \end{enumerate}
 %
 
@@ -94,8 +94,8 @@ The contents of this chapter has appeared in the pre-print: Pal, A., Edelman, A.
 Deep Equilibrium Models have traditionally been formulated as steady-state problems for a discrete dynamical system. However, discrete dynamical systems come with a variety of shortcomings. Consider the following linear discrete dynamical system (See \Cref{fig:linear_discrete_dynamical_system}):
 %
 \begin{align}
-    u_{n + 1} &= \alpha \cdot u_n \\
-    \texttt{ where } \|\alpha\| &< 1 \texttt{ and } u_0 = 1
+    u_{n + 1}                   & = \alpha \cdot u_n         \\
+    \texttt{ where } \|\alpha\| & < 1 \texttt{ and } u_0 = 1
 \end{align}
 %
 This system converges to a steady state of $u_\infty = 0$. However, in many cases, this convergence can be relatively slow. If $\alpha = 0.9$, then after 10 steps, the value is $u_{10} = 0.35$ because a small amount only reduces each successive step. Thus convergence could only be accelerated by taking many steps together. Even further, if $\alpha = -0.9$, the value ping-pongs over the steady state $u_{1} = -0.9$, meaning that if we could take some fractional step $u_{\delta t}$ then it would be possible to approach the steady state much faster.

@@ -75,14 +75,14 @@ While these experiments have demonstrated major performance improvements, it is 
     \centering
     \begin{tabular}{lcc}
       \toprule
-      \thead{Sensitivity Algorithm} & \thead{Memory Requirement} & \thead{Memory Requirement with Local Reularization} \\
+      \thead{Sensitivity Algorithm}                    & \thead{Memory Requirement}                 & \thead{Memory Requirement with Local Reularization}         \\
       \midrule
-      Backsolve Adjoint \tocite & $\bigO{s}$ & $\bigO{s + \mathrm{stages}}$ \\
-      Backsolve Adjoint with Checkpointing \tocite & $\bigO{s \times c}$ & $\bigO{s \times c  + \mathrm{stages}}$ \\
-      Interpolating Adjoint \tocite & $\bigO{s \times t}$ & $\bigO{s \times t  + \mathrm{stages}}$\\
-      Interpolating Adjoint with Checkpointing \tocite & $\bigO{s \times c}$ & $\bigO{s \times c + \mathrm{stages}}$ \\
-      Quadrature Adjoint \tocite & $\bigO{\left(s + p\right) \times t}$ & $\bigO{\left(s + p\right) \times t + \mathrm{stages}}$ \\
-      Direct Reverse Mode Differentiation & $\bigO{s \times t \times \mathrm{stages}}$ & $\bigO{\left(s \times t + 1\right) \times \mathrm{stages}}$ \\
+      Backsolve Adjoint \tocite                        & $\bigO{s}$                                 & $\bigO{s + \mathrm{stages}}$                                \\
+      Backsolve Adjoint with Checkpointing \tocite     & $\bigO{s \times c}$                        & $\bigO{s \times c  + \mathrm{stages}}$                      \\
+      Interpolating Adjoint \tocite                    & $\bigO{s \times t}$                        & $\bigO{s \times t  + \mathrm{stages}}$                      \\
+      Interpolating Adjoint with Checkpointing \tocite & $\bigO{s \times c}$                        & $\bigO{s \times c + \mathrm{stages}}$                       \\
+      Quadrature Adjoint \tocite                       & $\bigO{\left(s + p\right) \times t}$       & $\bigO{\left(s + p\right) \times t + \mathrm{stages}}$      \\
+      Direct Reverse Mode Differentiation              & $\bigO{s \times t \times \mathrm{stages}}$ & $\bigO{\left(s \times t + 1\right) \times \mathrm{stages}}$ \\
       \bottomrule
     \end{tabular}
   }

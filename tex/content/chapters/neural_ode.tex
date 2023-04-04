@@ -66,7 +66,7 @@ This method is extremely simple however, has an extremely high local truncation 
 Runge-Kutta (RK) Methods~\citep{runge1895numerische, kutta1901beitrag} are widely used to approximate the solutions of ODEs numerically. Given a tableau of coefficients $\left\{A, c, b\right\}$, these methods combine $s$ stages to obtain the estimate at $t + \dt$.
 %
 \begin{align}
-   & k_s = \func{f}{t + c_s \cdot \dt, z(t) + \sum_{i = 1}^{s - 1} a_{si} \cdot k_i} \\
+   & k_s = \func{f}{t + c_s \cdot \dt, z(t) + \sum_{i = 1}^{s - 1} a_{si} \cdot k_i}                     \\
    & z(t + dt) = z(t) + \dt \cdot \left( \sum_{i = 1}^s b_i \cdot k_i \right) \label{eq:rk_method_tsit5}
 \end{align}
 %
@@ -147,13 +147,13 @@ We defer the discussion of error estimation schemes for stochastic RK integrator
 While there is no precise definition of stiffness, the definition used in practice is ``stiff equations are problems for which explicit methods don't work''~\citep{wanner1996solving,shampine1979user}. A simplified stiffness index is given by:
 %
 \begin{equation}
-    S = \text{max}\|\texttt{Re}(\lambda_i)\|
+  S = \text{max}\|\texttt{Re}(\lambda_i)\|
 \end{equation}
 %
 where $\lambda_i$ are the eigenvalues of the local Jacobian matrix. We note that various measures of stiffness have been introduced over the years, all being variations of conditioning of the pseudo-spectra~\citep{shampine2007stiff, higham1993stiffness}. The difficulty in defining a stiffness metric is that in each case, some stiff systems like the classic Robertson chemical kinetics or excited Van der Pol equation may violate the definition, meaning all such definitions are (useful) heuristics. In particular, it was shown that for explicit Runge-Kutta methods satisfying $c_x = c_y$ for some internal step, the term
 %
 \begin{equation}
-    \|\lambda\| \approx \left\Vert\frac{ \func{f}{t + c_x \cdot \dt,\sum_{i=1}^{s} a_{xi}} - \func{f}{t + c_y \cdot \dt,\sum_{i=1}^{s} a_{yi}}}{\sum_{i=1}^{s} a_{xi} - \sum_{i=1}^{s} a_{yi}}\right\Vert
+  \|\lambda\| \approx \left\Vert\frac{ \func{f}{t + c_x \cdot \dt,\sum_{i=1}^{s} a_{xi}} - \func{f}{t + c_y \cdot \dt,\sum_{i=1}^{s} a_{yi}}}{\sum_{i=1}^{s} a_{xi} - \sum_{i=1}^{s} a_{yi}}\right\Vert
 \end{equation}
 %
 serves as an estimate to $S$~\citep{shampine1977stiffness}. Since each of these terms are already required in the Runge-Kutta updates of \Cref{eq:rk_method_tsit5}, this gives a computationally-free estimate. This estimate is thus found throughout widely used explicit Runge-Kutta implementations, such as by the dopri method (found in suites like SciPy and Octave) to automatically exit when stiffness is detected~\citep{wanner1996solving}, and by switching methods which automatically change explicit Runge-Kutta methods to methods more suitable for stiff equations~\citep{rackauckas2019confederated}.
@@ -167,12 +167,12 @@ serves as an estimate to $S$~\citep{shampine1977stiffness}. Since each of these 
     \centering
     \begin{tabular}{lcc}
       \toprule
-      \thead{Sensitivity Algorithm} & \thead{Memory Requirement} & \thead{Memory Requirement with Checkpointing} \\
+      \thead{Sensitivity Algorithm}       & \thead{Memory Requirement}                 & \thead{Memory Requirement with Checkpointing} \\
       \midrule
-      Backsolve Adjoint \tocite & $\bigO{s}$ & $\bigO{s \times c}$ \\
-      Interpolating Adjoint \tocite & $\bigO{s \times t}$ & $\bigO{s \times c}$ \\
-      Quadrature Adjoint \tocite & $\bigO{\left(s + p\right) \times t}$ & - \\
-      Direct Reverse Mode Differentiation & $\bigO{s \times t \times \mathrm{stages}}$ & - \\
+      Backsolve Adjoint \tocite           & $\bigO{s}$                                 & $\bigO{s \times c}$                           \\
+      Interpolating Adjoint \tocite       & $\bigO{s \times t}$                        & $\bigO{s \times c}$                           \\
+      Quadrature Adjoint \tocite          & $\bigO{\left(s + p\right) \times t}$       & -                                             \\
+      Direct Reverse Mode Differentiation & $\bigO{s \times t \times \mathrm{stages}}$ & -                                             \\
       \bottomrule
     \end{tabular}
   }
@@ -185,6 +185,44 @@ serves as an estimate to $S$~\citep{shampine1977stiffness}. Since each of these 
 \subsection{Continuous Sensitivity Analysis}
 \label{subsec:continuous_sensitivity_analysis_odes}
 
+\subsubsection{Backsolve Adjoint}
+\label{subsubsec:backsolve_adjoint}
+
+\todo{chatgpt}
+
+The adjoint method is a powerful technique for computing gradients of the parameters of a neural ordinary differential equation (ODE) model. The basic idea is to use the adjoint state method to efficiently compute gradients of a cost function with respect to the model parameters.
+
+Let us consider a neural ODE model with state variable $z(t)$ and parameters $\theta$. The state variable $z(t)$ evolves according to the ODE:
+
+\begin{equation}
+  \frac{dz(t)}{dt} = f(z(t), t, \theta)
+\end{equation}
+
+where $f$ is a neural network parameterized by $\theta$. Given some initial state $z(0)$, the solution to the ODE can be obtained using an ODE solver.
+
+Now, let us consider a cost function $J(z(T), \theta)$, where $T$ is the final time. We want to compute the gradient of the cost function with respect to the parameters $\theta$.
+
+To compute this gradient, we introduce an adjoint variable $a(t)$ that satisfies the following ODE:
+
+\begin{equation}
+  \frac{da(t)}{dt} = -\frac{\partial J}{\partial z(t)}^T f(z(t), t, \theta)
+\end{equation}
+
+where $\frac{\partial J}{\partial z(t)}$ is the gradient of the cost function with respect to the state variable $z(t)$.
+
+We can solve this adjoint ODE backwards in time using the same ODE solver that we used to solve the forward ODE. At each time step, we can use the adjoint variable $a(t)$ to compute the gradient of the cost function with respect to the parameters $\theta$:
+
+\begin{equation}
+  \frac{\partial J}{\partial \theta} = \int_0^T \frac{\partial f}{\partial \theta}^T a(t) dt
+\end{equation}
+
+where $\frac{\partial f}{\partial \theta}$ is the Jacobian matrix of $f$ with respect to the parameters $\theta$.
+
+In practice, the adjoint method is computationally efficient since it requires solving only two ODEs (the forward ODE and the adjoint ODE) to compute the gradients of the cost function with respect to all the parameters of the model. This makes it especially useful for neural ODE models with large numbers of parameters.
+
+\subsubsection{Interpolating Adjoint}
+\label{subsubsec:interpolating_adjoint}
+
 \subsection{Discrete Sensitivity Analysis}
 \label{subsec:discrete_sensitivity_analysis_odes}
 
@@ -195,8 +233,8 @@ serves as an estimate to $S$~\citep{shampine1977stiffness}. Since each of these 
 Neural Ordinary Differential Equations are Implicit Neural Networks that use a neural network to parameterize the dynamics of the ODE: Mathematically, this is given by:
 %
 \begin{align}
-  \frac{dz}{dt} &= \func{f}{z(t), \theta, t} \qquad z(t_0) = z_0\\
-  \func{z}{t_1} &= \func{z}{t_0} + \int_{t_0}^{t_1} \func{f}{z(t), \theta, t} \, \dt
+  \frac{dz}{dt} & = \func{f}{z(t), \theta, t} \qquad z(t_0) = z_0                     \\
+  \func{z}{t_1} & = \func{z}{t_0} + \int_{t_0}^{t_1} \func{f}{z(t), \theta, t} \, \dt
 \end{align}
 %
 where $f$ is an Explicit Neural Network, $\theta$ are the parameters of the neural network, and we want to solve for the dynamics $\func{z}{t}$ in $t \in [t_0, t_1]$. Typically, $z_0$ is specified as the input from the previous layers. Then we can use sensitivity analysis (\Cref{sec:sensitivity_analysis_odes}) to compute $\left. v^T \frac{\partial \func{z}{t}}{\partial z_0} \right|_{t = t_1}$ and $\left. v^T \frac{\partial \func{z}{t}}{\partial g} \right|_{t = t_1}$ (where $v^T$ is obtained from back-propagation on the succeeding layers) and train the neural network end-to-end using gradient descent.
@@ -231,9 +269,9 @@ where $f$ is an Explicit Neural Network, $\theta$ are the parameters of the neur
 Neural ODEs tend to learn more complex dynamics as the training progresses. Since the complexity of the dynamics and time taken by the solver are intrinsically related, the training and inference time grows over training. \citet{ghosh2020steer} stochastically perturb the ending integration time-point of the ODE to allow the Neural ODE to learn simpler dynamics. During training, they reformulate the problem as:
 %
 \begin{align}
-  \func{z}{t_1} &= \func{z}{t_0} + \int_{t_0}^{T} \func{f}{z(t), \theta, t} \, \dt\\
-  \texttt{where } T &\sim \mathcal{U}(t_1 - b, t_1 + b)\\
-  \phantom{where } b &< t_1 - t_0
+  \func{z}{t_1}      & = \func{z}{t_0} + \int_{t_0}^{T} \func{f}{z(t), \theta, t} \, \dt \\
+  \texttt{where } T  & \sim \mathcal{U}(t_1 - b, t_1 + b)                                \\
+  \phantom{where } b & < t_1 - t_0
 \end{align}
 %
 
