@@ -239,7 +239,7 @@ Neural Ordinary Differential Equations are Implicit Neural Networks that use a n
 %
 where $f$ is an Explicit Neural Network, $\theta$ are the parameters of the neural network, and we want to solve for the dynamics $\func{z}{t}$ in $t \in [t_0, t_1]$. Typically, $z_0$ is specified as the input from the previous layers. Then we can use sensitivity analysis (\Cref{sec:sensitivity_analysis_odes}) to compute $\left. v^T \frac{\partial \func{z}{t}}{\partial z_0} \right|_{t = t_1}$ and $\left. v^T \frac{\partial \func{z}{t}}{\partial g} \right|_{t = t_1}$ (where $v^T$ is obtained from back-propagation on the succeeding layers) and train the neural network end-to-end using gradient descent.
 
-\subsection{Discussion on Sensitivity Analysis: Optimize-then-Discretize vs Discretize-then-Optimize}
+\subsection{Optimize-then-Discretize vs Discretize-then-Optimize}
 \label{subsec:discussion_on_sensitivity_analysis_optimize_then_discretize_vs_discretize_then_optimize}
 
 \section{Common Applications of Neural ODEs}
