@@ -20,73 +20,12 @@ Our main contributions include\footnote{Our code is publicly available at \url{h
 
 The contents of this chapter has appeared in the pre-print: Pal, A., Edelman, A. and Rackauckas, C., 2022. Continuous Deep Equilibrium Models: Training Neural ODEs Faster by Integrating Them to Infinity. arXiv preprint arXiv:2201.12240.~\citep{pal2022mixing}
 
-
-% \section{Background}
-% \label{sec:background}
-
-% Explicit Deep Learning Architectures specify a projection $f: \mathcal{X} \mapsto \mathcal{Z}$ by stacking multiple ``layers". Implicit models, however, define a solution process instead of directly specifying the projection. These methods enforce a constraint on the output space $\mathcal{Z}$ by learning $g: \mathcal{X} \times \mathcal{Z} \mapsto \mathbb{R}^n$. By specifying a solution process, implicit models can effectively vary features like depth to adapt automatically to new scenarios and inputs. Some prominent implicit models include Neural ODEs~\citep{chen2018neural}, where the output $z$ is defined by the ODE $\frac{dz}{dt} = g_\phi(x, t)$. \citet{liu2019neural} generalized this framework to Stochastic Differential Equations (SDEs) by stochastic noise injection, which regularizes the training of Neural ODEs, allowing them to be more robust and achieve better generalization. \citet{bai_deep_2019} designed equilibrium models where the output $z$ was constrained to be a steady state, $z^* = f_\theta(z^*, x)$. Another example of implicit layer architectures is seen in \citet{amos2017optnet, agrawal2019differentiable} set $z$ to be the solution of convex optimization problems.
-
-% Deep Implicit Models essentially removed the design bottleneck of choosing the ``depth" of neural networks. Instead, these models use a ``tolerance" to determine the accuracy to which the constraint needs to be satisfied. Additionally, many of these models only require $O(1)$ memory for backpropagation, thus alluding to potential increased efficiency over their explicit layer counterparts. However, evaluating these models require solving differential equations~\citep{chen2018neural, liu2019neural}, non-linear equations~\citep{bai_deep_2019}, convex optimization problems~\citep{amos2017optnet, agrawal2019differentiable}, etc. Numerous authors~\citep{dupont2019augmented, grathwohl2018ffjord, finlay2020train, kelly2020learning, ghosh2020steer, bai2021stabilizing} have noted that this solution process makes implicit models significantly slower in practice during training and prediction compared to explicit networks achieving similar accuracy.
-
-% \subsection{Neural Ordinary Differential Equations}
-% \label{subsec:neural_odes}
-
-% Initial Value Problems (IVPs) are a class of ODEs that involve finding the state at a later time $t_1$, given the value $z_0$ at time $t_0$. \citet{chen2018neural} proposed the Neural ODE framework, which uses neural networks to model the ODE dynamics
-% %
-% \begin{equation}
-%     \frac{dz(t)}{dt} = f_{\theta}\left(z\right)
-% \end{equation}
-% %
-% Using adaptive time stepping allows the model to operate at a variable continuous depth depending on the inputs. Removing the fixed depth constraint of Residual Networks provides a more expressive framework and offers several advantages in problems like density estimation~\cite{grathwohl2018ffjord}, irregularly spaced time series problems~\cite{rubanova2019latent}, etc. Training Neural ODEs using continuous adjoints has the added benefit of constant memory overhead. However, this benefit often leads to slower training since we need to backsolve an ODE. We defer the exact details of the continuous adjoint equations to \citet{chen2018neural}.
-
-% \begin{figure}[t]
-%     \centering
-%     \includegraphics[width=0.9\linewidth]{images/model_architecture_unified.pdf}
-%     \caption{\textbf{Discrete DEQ Formulation}: Discrete DEQ Block where the input $x$ is injected at every iteration till the system (with initial state $z_0$) converges to a steady $z^*$. In Vanilla DEQ, $z_0 = 0$ while in Skip DEQ, an additional explicit model $g_\phi$ (which can potentially share the weights of $f_\theta$) is used to set the initial state $z_0 = g_\phi(x)$.}
-%     \label{fig:model_architectures}
-% \end{figure}
-
-% \subsection{Deep Equilibrium Models}
-% \label{subsec:deep_equilibrium_models}
-
-% Deep Equilibrium Networks (DEQs)~\citep{bai_deep_2019} are implicit models where the output space represents a steady-state solution. Intuitively, this represents infinitely deep neural networks with input injection, i.e., an infinite composition of explicit layers $z_{n + 1} = f_\theta(z_n, x)$ with $z_0 = 0$ and $n \rightarrow \infty$. In practice, it is equivalent to evaluating a dynamical system until it reaches a steady state $z^* = f_\theta(z^*, x)$. \citet{bai_deep_2019, bai_multiscale_2020} perform nonlinear fixed point iterations of the discrete dynamical system using Broyden's method~\citep{broyden1965class, bai_multiscale_2020} to reach this steady-state solution. 
-
-% Evaluating DEQs requires solving a steady-state equation involving multiple evaluations of the explicit layer slowing down the forward pass. However, driving the solution to steady-state makes the backward pass very efficient~\citep{johnson2012notes}. Despite a potentially infinite number of evaluations of $f_\theta$ in the forward pass, backpropagation only requires solving a linear equation.
-% %
-% % \vspace{-0.5em}
-% \begin{gather}
-%     z^* = f_\theta(z^*, x)\\
-%     \implies \frac{\partial z^*}{\partial \theta} = \frac{f_\theta(z^*, x)}{\partial z^*} \cdot \frac{\partial z^*}{\partial \theta} + \frac{\partial f_\theta(z^*, x)}{\partial \theta}\\
-%     \implies \left(I - \frac{\partial f_\theta(z^*, x)}{\partial z^*}\right) \frac{\partial z^*}{\partial \theta} = \frac{\partial f_\theta(z^*, x)}{\partial \theta}
-% \end{gather}
-% %
-% For backpropagation, we need the Vector-Jacobian Product~(VJP):
-% %
-% \begin{align}
-%     \left(\frac{\partial z^*}{\partial \theta}\right)^T v &= \left( \frac{\partial f_\theta(z^*, x)}{\partial \theta} \right)^T\left( I - \frac{\partial f_\theta(z^*, x)}{\partial z^*} \right)^{-T} v\\
-%     &= \left( \frac{\partial f_\theta(z^*, x)}{\partial \theta} \right)^T g
-% \end{align}
-% %
-% where $v$ is the gradients from layers after the DEQ module. Computing $\left( I - \frac{\partial f_\theta(z^*, x)}{\partial z^*} \right)^{-T}$ is expensive and makes DEQs non-scalable to high-dimensional problems. Instead, we solve the linear equation $ g =  \left(\frac{\partial f_\theta(z^*, x)}{\partial z^*} \right)^{T} g + v$ using Newton-Krylov Methods like GMRES~\citep{saad1986gmres}. To compute the final VJP, we need to compute $\left( \frac{\partial f_\theta(z^*, x)}{\partial \theta} \right)^T g$, which allows us to efficiently perform the backpropagation without explicitly computing the Jacobian.
-
-% \subsubsection{Multiscale Deep Equilibrium Network}
-% \label{subsubsec:mdeq}
-
-% Multiscale modeling~\citep{burt1987laplacian} has been the central theme for several deep computer vision applications~\citep{farabet2012learning, yu2015multi, chen2016attention, chen2017deeplab}. The standard DEQ formulation drives a single feature vector to a steady state. \citet{bai_multiscale_2020} proposed Multiscale DEQ (MDEQ) to learn coarse and fine-grained feature representations simultaneously. MDEQs operate at multiple feature scales $z = \left\{ z_1, z_2, \dots, z_n \right\}$, with the new equilibrium state $z^* = f_\theta(z_1^*, z_2^*, \dots, z_n^*, x)$. All the feature vectors in an MDEQ are interdependent and are simultaneously driven to a steady state. \citet{bai_multiscale_2020} used a Limited-Memory Broyden Solver~\citep{broyden1965class} to solve these large scale computer vision problems. We use this MDEQ formulation for all our classification experiments.
-
-% \subsubsection{Jacobian Stabilization}
-% \label{subsubsec:jacobian_stabilization}
-
-% Infinite composition of a function $f_\theta$ does not necessarily lead to a steady-state -- chaos, periodicity, divergence, etc., are other possible asymptotic behaviors. The Jacobian Matrix $J_{f_\theta}(z^*)$ controls the existence of a stable steady-state and influences the convergence of DEQs in the forward and backward passes. \citet{bai2021stabilizing} describes how controlling the spectral radius of $J_{f_\theta}(z^*)$ would prevent simpler iterative solvers from diverging or oscillating. \citet{bai2021stabilizing} introduce a Jacobian term to the training objective to regularize the model training. The authors use the Hutchinson estimator~\citep{hutchinson1989stochastic} to compute and regularize the Frobenius norm of the Jacobian.
-% %
-% \begin{equation}
-%     \mathcal{L}_{jac} = \lambda_{jac} \frac{\| \epsilon^T J_{f_\theta}(z^*) \|_2^2}{d}; \quad \epsilon \sim \mathcal{N}(0, I_d)
-% \end{equation}
-% %
-% While well-motivated, the disadvantage of this method is that the Hutchinson trace estimator requires automatic differentiation in the loss function, thus requiring higher order differentiation in the training process and greatly increasing the training costs. However, in return for the increased cost, it was demonstrated that increased robustness followed, along with faster forward passes in the trained results. Our methods are orthogonal to the Jacobian stabilization process. In \Cref{sec:experiments}, we provide empirical evidence on composing our models with Jacobian Stabilization to achieve even more robust results.
-
-% \section{Methods}
-% \label{sec:methods}
+\begin{figure}
+    \centering
+    \includegraphics[width=\linewidth]{../figures/deep_equilibrium_models/summary_plot.pdf}
+    \caption{\textbf{Relative Training and Backward Pass Timings against Continuous DEQs} \textit{(lower is better)}: In all scenarios, Neural ODEs take $\mathit{4.7} - \mathit{6.182 \times}$ more time in the backward pass compared to Vanilla Continuous DEQs. Whereas combining Skip (Reg.) with Continuous DEQs accelerates the backward pass by $\mathit{2.8} - \mathit{5.9 \times}$.}
+    \label{fig:summary_plot}
+\end{figure}
 
 \section{Continuous Deep Equilibrium Networks}
 \label{sec:continuous_deqs}
@@ -161,9 +100,9 @@ Our primary metrics are classification accuracy, the number of function evaluati
 \subsection{MNIST Image Classification}
 \label{subsec:infinite_time_neural_odes_mnist_image_classification}
 
-\begin{table*}[t]
+\begin{table}[t]
     \centering
-    \adjustbox{max width=0.9\textwidth}{
+    \adjustbox{max width=\linewidth}{
         \centering
         \begin{tabular}{lcccccc}
             \toprule
@@ -182,7 +121,7 @@ Our primary metrics are classification accuracy, the number of function evaluati
     }
     \caption{\textbf{MNIST Classification with Fully Connected Layers}: Skip Reg. Continuous DEQ without Jacobian Regularization takes \textit{$\mathit{4\times}$ less training time} and \textit{speeds up prediction time by $4\times$} compared to Continuous DEQ. Continuous DEQ with Jacobian Regularization has a similar prediction time but takes \textit{$\mathit{6\times}$ more training time} than Skip Reg. Continuous DEQ. Using Skip variants \textit{speeds up training by $\mathit{1.42\times - 4\times}$}.}
     \label{tab:mnist_dense_summary}
-\end{table*}
+\end{table}
 
 \textbf{Training Details:} Following \citet{kelly2020learning}, our Fully Connected Model consists of 3 layers -- a downsampling layer $\mathbb{R}^{784} \mapsto \mathbb{R}^{128}$, continuous DEQ layer $f_\theta: \mathbb{R}^{128} \mapsto \mathbb{R}^{128}$, and a linear classifier $\mathbb{R}^{128} \mapsto \mathbb{R}^{10}$.
 
@@ -195,9 +134,9 @@ For regularization, we use $\lambda_{\texttt{skip}} = 0.01$ and train the models
 \subsection{CIFAR10 Image Classification}
 \label{subsec:infinite_time_neural_odes_cifar10_image_classification}
 
-\begin{table*}[t]
+\begin{table}[t]
     \centering
-    \adjustbox{max width=0.9\textwidth}{
+    \adjustbox{max width=\linewidth}{
         \centering
         \begin{tabular}{lcccccc}
             \toprule
@@ -218,7 +157,14 @@ For regularization, we use $\lambda_{\texttt{skip}} = 0.01$ and train the models
     }
     \caption{\textbf{CIFAR10 Classification with Small Neural Network}: Skip Reg. Continuous DEQ achieves the \textit{highest test accuracy among DEQs}. Continuous DEQs are faster than Neural ODEs during training by a factor of $\mathit{2\times - 2.36\times}$, with a speedup of $\mathit{4.2\times - 8.67\times}$ in the backward pass. We also observe a prediction speed-up for Continuous DEQs of $\mathit{1.77\times - 2.07\times}$ against Discrete DEQs and $\mathit{1.34\times - 1.52\times}$ against Neural ODE.}
     \label{tab:cifar10_tiny_summary}
-\end{table*}
+\end{table}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\linewidth]{../figures/deep_equilibrium_models/cifar10_tiny.pdf}
+    \caption{\textbf{CIFAR10 Classification with Small Neural Network}}
+    \label{fig:cifar10_tiny}
+\end{figure}
 
 
 For all the baselines in this section, Vanilla DEQ is trained with the same training hyperparameters as the corresponding Skip DEQs (taken from \citet{bai_multiscale_2020}). Multiscale Neural ODE with Input Injection is trained with the same hyperparameters as the corresponding Continuous DEQs.
@@ -233,9 +179,9 @@ We use a fixed regularization weight of $\lambda_{\texttt{skip}} = 0.01$ and the
 
 \textbf{Results:} We summarize our results in \Cref{tab:cifar10_tiny_summary} and \Cref{fig:cifar10_tiny}. Continuous DEQs are faster than Neural ODEs during training by a factor of $\mathit{2\times - 2.36\times}$, with a speedup of $\mathit{4.2\times - 8.67\times}$ in the backward pass.
 
-\begin{table*}[t]
+\begin{table}[t]
     \centering
-    \adjustbox{max width=0.9\textwidth}{
+    \adjustbox{max width=\linewidth}{
         \centering
         \begin{tabular}{lcccccc}
             \toprule
@@ -256,7 +202,14 @@ We use a fixed regularization weight of $\lambda_{\texttt{skip}} = 0.01$ and the
     }
     \caption{\textbf{CIFAR10 Classification with Large Neural Network}: Skip Reg. Continuous DEQ achieves the \textit{highest test accuracy}. Continuous DEQs are faster than Neural ODEs during training by a factor of \timeschange{4.1}{7.98}, with a speedup of \timeschange{6.18}{36.552} in the backward pass. However, we observe a prediction slowdown for Continuous DEQs of \timeschange{1.4}{2.36} against Discrete DEQs and \timeschange{0.90}{0.95} against Neural ODE.}
     \label{tab:cifar10_large_summary}
-\end{table*}
+\end{table}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\linewidth]{../figures/deep_equilibrium_models/cifar10_large}
+    \caption{\textbf{CIFAR10 Classification with Large Neural Network}}
+    \label{fig:cifar10_large}
+\end{figure}
 
 \subsubsection{Architecture with 11M parameters}
 
@@ -266,12 +219,19 @@ We use a fixed regularization weight of $\lambda_{\texttt{skip}} = 0.01$ and the
 
 \textbf{Results:} We summarize our results in \Cref{tab:cifar10_large_summary} and \Cref{fig:cifar10_large}. Continuous DEQs are faster than Neural ODEs during training by a factor of \timeschange{4.1}{7.98}, with a speedup of \timeschange{6.18}{36.552} in the backward pass.
 
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\linewidth]{../figures/deep_equilibrium_models/imagenet_small}
+    \caption{\textbf{ImageNet Classification}}
+    \label{fig:imagenet_small}
+\end{figure}
 \subsection{ImageNet Image Classification}
 \label{subsec:infinite_time_neural_odes_imagenet_image_classification}
 
-\begin{table*}[t]
+\begin{table}[t]
     \centering
-    \adjustbox{max width=0.9\textwidth}{
+    \adjustbox{max width=\linewidth}{
         \centering
         \begin{tabular}{lcccccc}
             \toprule
@@ -292,7 +252,7 @@ We use a fixed regularization weight of $\lambda_{\texttt{skip}} = 0.01$ and the
     }
     \caption{\textbf{ImageNet Classification}: All the variants attain comparable evaluation accuracies. Skip (Reg.) accelerates the training of Continuous DEQ by $\mathit{1.57\times - 1.96\times}$, with a reduction of $\mathit{2.2\times - 4.2\times}$ in the backward pass timings. However, we observe a marginal increase of $\mathit{4\%}$ in prediction timings for Skip (Reg.) Continuous DEQ compared against Continuous DEQ. For Discrete DEQs, Skip (Reg.) variants reduce the prediction timings by $\mathit{6.5\% - 12\%}$.}
     \label{tab:imagenet_summary}
-\end{table*}
+\end{table}
 
 \textbf{Training Details:} Our Multiscale DEQ architecture is the same as MDEQ-small architecture used in \citet{bai_multiscale_2020}. For the explicit network in Skip~DEQ, we use the residual block and downsampling blocks from \citet{bai_multiscale_2020} which account for the additional 58K trainable parameters.
 
