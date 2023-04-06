@@ -1,0 +1,79 @@
+%-----------------------------------------------------
+%Ensures no ugly page breaks by 
+%first measuring the minimum amount of space required
+%Using a savebox.
+%-----------------------------------------------------
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{adpwrapfig}[2013/07/28 ADP's Wrapfig Class]
+
+%Requirements.
+\RequirePackage{wrapfig}
+\RequirePackage{calc,needspace,etoolbox,ifthen,caption}
+
+%Objects in this class.
+\newsavebox{\@@wf@savebox}          %Box to save.
+\newlength{\@@wf@ht}                %Height
+\newlength{\@@wf@wd}                %Width
+\newcounter{@@wf@cnt}               %Linecount if specified
+\newcommand{\@@wf@capprop}{0.95}    %Caption Proportion
+\newbool{@@wf@break}                %For needspace page break hook
+
+%Create a boolean switch, for the case when the user specifies
+%the number of lines, and, @@wf@bre@kreq
+\newbool{@@wf@alwaysspace}\booltrue{@@wf@alwaysspace}
+
+%Backup existing definitions.
+\let\@wf\wrapfigure\let\@endwf\endwrapfigure
+
+%Patch the neespace commands.
+\patchcmd{\@sneedsp@}{\break}{\booltrue{@@wf@break} \break}{}{}
+\patchcmd{\@needsp@}{\break}{\booltrue{@@wf@break} \break}{}{}
+
+%-----------------------------------------------------
+%Redefine the wrapfigure environment.
+%-----------------------------------------------------
+\renewenvironment{wrapfigure}[3][-1]{%
+    \setcounter{@@wf@cnt}{#1}%
+    \def\@inpA{#2}%
+    \setlength{\@@wf@wd}{#3}
+%Process the box.
+    \setbox\@@wf@savebox\vbox\bgroup\bgroup%
+        \setlength\hsize\@@wf@wd
+        \textwidth\hsize
+        \linewidth\hsize
+        \@parboxrestore
+        \@minipagerestore
+        \@setminipage
+        \captionsetup{width=\@@wf@capprop\linewidth}
+}{  %<<<<<<BODY CONTENT
+        \par\egroup\egroup%
+    \@@wf@ht\ht\@@wf@savebox%
+
+    %Command to enforce the required height
+    \def\@ns{\Needspace{\dimexpr\@@wf@ht+\intextsep\relax}}
+
+    %Two conditions on whether to enforce
+    \ifthenelse{\the@@wf@cnt<1}{\@ns}{}%
+    \ifbool{@@wf@alwaysspace}{\@ns}{}%
+
+    %Start with not requiring pagebreak.
+    %needspace has been patched to set this to true if 
+    %it intends to enforce a break.
+    \boolfalse{@@wf@break} 
+
+    %Now execute the existing environment
+    \par\ifthenelse{\the@@wf@cnt>0}%
+        {\@wf[\the@@wf@cnt]{\@inpA}{\@@wf@wd}} %TRUE, When Lines are Specified
+        {\@wf{\@inpA}{\@@wf@wd}}               %FALSE, When Not.
+            %Resolve the hook made by needspace, retracting by intxtsep
+            %Retrace
+                    \ifbool{@@wf@break}{\vspace*{-\intextsep}}{}
+            %Execute
+            \usebox{\@@wf@savebox}%
+                    %Tighten
+                    \ifbool{@@wf@break}{\vspace*{-2\intextsep}}{\vspace*{-\intextsep}}%
+    \@endwf%
+}
+
+\endinput
+%Tada.

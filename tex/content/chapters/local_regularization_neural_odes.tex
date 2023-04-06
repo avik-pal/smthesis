@@ -1,0 +1,375 @@
+\chapter{Closing the Blackbox: Local Regularization for Neural DEs using Local Error Estimates}
+\label{chapter:local_regularization_neural_odes}
+
+Implicit Models, such as Neural Ordinary Differential Equations~\cite{chen2018neural} and Deep Equilibrium Models~\cite{bai2019deep, pal2022mixing}, have emerged as a promising technique to determine the depth of neural networks automatically. To maximize performance on a dataset, explicit models are tuned to the ``hardest'' training sample, which hurts the inference timings for ``easier'' -- more abundant -- samples. Using adaptive differential equation solvers allow these implicit models to choose the number of steps they need effectively. This idea of representing neural networks as ODEs has since been generalized to Stochastic Differential Equations~\citep{liu2019neural, rackauckas2020universal} and other architectures to improve robustness.
+
+Despite the rapid progress in these methods, the core problem of the scalability of these models is still persistent. Several solutions to these have been proposed:
+%
+\begin{itemize}
+  \item \citet{kelly2020learning, finlay2020train} use higher order derivatives for regularization.
+  \item \citet{poli2020hypersolvers} learn neural solvers to solve Neural ODEs faster.
+  \item In \Cref{chapter:internal_solver_heuristics_regularized_neural_des}, we described a ``zero-cost'' global regularization scheme.
+  \item \citet{ghosh2020steer} randomize the integration stop time to ``smoothen'' the dynamics.
+\end{itemize}
+%
+All these methods have definite tradeoffs. \citet{finlay2020train, kelly2020learning} have relied on using higher-order regularization terms to constrain the space of learnable dynamics. These models speed up predictions, but their benefits are often overshadowed by a massive training slowdown~\citep{pal2021opening}. More recently, quite a few first-order schemes have been proposed. \citet{ghosh2020steer} randomized the endpoint of Neural ODEs to incentivize simpler dynamics. However, \citet{pal2021opening} didn't find significant benefits of using STEER in their experiments. \citet{pal2021opening} used internal solver heuristics -- local error and stiffness estimates -- to control the learned dynamics in a way that decreased both prediction and training time.
+
+This paper presents a generally applicable method to force the neural differential equation training process to choose the least expensive option. We build upon the global regularization scheme proposed in \citet{pal2021opening} and ``close'' the blackbox allowing our method to work across various sensitivity algorithms. Our main contributions include the following\footnote{Our code is publicly available at \url{https://github.com/avik-pal/LocalRegNeuralDE.jl}}:
+%
+\begin{enumerate}
+  \item We show that our local regularization method -- building upon the primitives proposed in \citet{pal2021opening} -- performs at par with global regularization.
+
+  \item We present two sampling methods that trade-off small computational costs for consistently better performance.
+
+  \item Using local regularization allows our models to leverage optimize-then-discretize in the backward pass (in addition to discretize-then-optimize methods). Our method works around the several engineering limitations of automatic differentiation (AD) systems~\citep{rackauckas_2022} that are needed to make global regularization work.
+
+  \item We empirically show that regularizing solver heuristics with biased sampling stabilizes the training of larger neural ODEs.
+\end{enumerate}
+%
+
+The contents of this chapter has appeared previously in the pre-print: Pal, A., Edelman, A. and Rackauckas, C., 2023. Locally Regularized Neural Differential Equations: Some Black Boxes Were Meant to Remain Closed!. arXiv preprint arXiv:2303.02262. \citep{pal2023locally}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\textwidth]{../figures/local_regularizing_neural_des/summary_plot.pdf}
+  \caption{\textbf{Locally Regularized NDE leads to faster predictions and faster training compared to vanilla NDE.}}
+  \label{fig:localreg_summary_plot}
+\end{figure}
+
+
+\section{Randomized Local Regularization: Overcoming the shortcomings of Global Regularization}
+\label{sec:randomized_local_regularization_overcoming_the_shortcomings_of_global_regularization}
+
+
+In \Cref{subsec:limitations_of_using_error_and_stiffness_estimates}, we discussed the downsides of using global regularization with local error estimates. To summarize:
+%
+\begin{enumerate}
+  \item Global Regularization relies on discrete sensitivity analysis, which is \textit{more memory intensive}.
+
+  \item Global Regularization depends on AD tooling to support dynamic compute graphs in an efficient way, making it \textit{hard to incorporate into existing code-bases}.
+\end{enumerate}
+%
+To get around these limitations, we developed a new technique using local sampling of error estimates at specific time points, rather than globally over the full interval. We deal with sampling the ``appropriate'' time point for regularization by two strategies:
+%
+\begin{itemize}
+  \item \textbf{\Cref{alg:local_regularization_unbiased_sampling} Unbiased Sampling}: We random uniformly sample the time-point in the integration time span. Intuitively, since we will perform the training for ``a large number of steps,'' the learned dynamical system would end up being faster to solve ``everywhere'' over the time span.
+
+  \item \textbf{\Cref{alg:local_regularization_biased_sampling} Biased Sampling}: Adaptive Time-Stepping Differential Equation Solvers naturally take more steps around the area, which is harder to integrate. We can bias the regularization to operate around parts of the dynamical system which are ``harder'' by sampling a time-point from the solution time points.
+\end{itemize}
+%
+
+\begin{algorithm}[t]
+  \caption{\textbf{Unbiased Sampling: Training}}
+  \label{alg:local_regularization_unbiased_sampling}
+  \begin{algorithmic}[1]
+    \Function{$\texttt{ERNODE}_{\texttt{Unbiased}}$}{$x$, $f_\theta$, $t_{\texttt{span}}$}
+    \State \texttt{Define} $\frac{du}{dt} = f_\theta(u, t)$
+    \State $t_0, t_1 \gets t_{span}$
+    \State $\treg \sim \mathbb{U}\left[t_0,~t_1\right]$
+    \State $\texttt{sol} \gets \texttt{solve}(\frac{du}{dt}, \texttt{ DE Solver},~t_{\texttt{span}})$
+    \State $u_{\treg} \gets \texttt{sol}(\treg)$
+    \State Run single step for the solver with time-span $(\treg, t_1)$
+    \State $\texttt{r} \gets $ Local Error Estimate $@ t=\treg$
+    \State \Return{$\texttt{sol}, \texttt{r}$}
+    \EndFunction
+  \end{algorithmic}
+\end{algorithm}
+
+\subsection{Unbiased Sampling of Local Error Estimates}
+\label{subsec:unbiased_sampling_of_local_error_estimates}
+
+When training a Neural ODE, the integration time-span is fixed. Training any deep learning model involves several thousand steps. We compute the total local error estimate over the entire time-span when performing global regularization. For unbiased sampling, we hypothesize that if we regularize at random uniformly sampled time points in the time-span, the learned dynamical system will demonstrate similar properties in terms of NFE compared to global regularization. Our new regularization term becomes $\left(\mathcal{R}_{E}\right)_{\texttt{unbiased}}$ as:
+%
+\begin{gather}
+  \left(\mathcal{R}_{E}\right)_{\texttt{unbiased}} = \left(\texttt{E}_{\texttt{Est}}\right)_{\treg} \cdot |\dt_{\treg}|\\
+  \treg \sim \mathbb{U}[\texttt{tspan}]
+\end{gather}
+%
+
+\begin{algorithm}[t]
+  \caption{\textbf{Biased Sampling: Training}}
+  \label{alg:local_regularization_biased_sampling}
+  \begin{algorithmic}[1]
+    \Function{$\texttt{ERNODE}_{\texttt{Biased}}$}{$x$, $f_\theta$, $t_{\texttt{span}}$}
+    \State \texttt{Define} $\frac{du}{dt} = f_\theta(u, t)$
+    \State $t_0, t_1 \gets t_{span}$
+    \State $\texttt{sol} \gets \texttt{solve}(\frac{du}{dt}, \texttt{ DE Solver},~t_{\texttt{span}})$
+    \State $\treg \sim \mathbb{U}\left(\texttt{sol}.t\right)$
+    \State $u_{\treg} \gets \texttt{sol}(\treg)$
+    \State Run single step for the solver with time-span $(\treg, t_1)$
+    \State $\texttt{r} \gets $ Local Error Estimate $@ t=\treg$
+    \State \Return{$\texttt{sol}, \texttt{r}$}
+    \EndFunction
+  \end{algorithmic}
+\end{algorithm}
+
+\subsection{Biased Sampling of Local Error Estimates}
+\label{subsec:biased_sampling_of_local_error_estimates}
+
+\begin{wrapfigure}{r}{0.5\linewidth}
+  \centering
+  \includegraphics[width=0.95\linewidth]{../figures/local_regularizing_neural_des/biased_sampling_robertson_example}
+  \captionof{figure}{\textbf{Robertson Stiff ODE System}: Solving stiff systems like Robertson~\citep{robertson1966solution} (using Rodas5~\citep{piche1995stable}) involves spending around $75\%$ of the time in $t < 5000$ (i.e. $5\%$ of the time-span). The vertical lines denote the time-points at which the ODE System was solved.}
+  \label{fig:robertson_stiff_system}
+\end{wrapfigure}
+
+
+Consider a simple scenario where the learned dynamics of the DE is harder to solve in $\left[0.25, 0.35\right]$, and we are solving the DE from $t_0 = 0$ to $t_1 = 1$. Our primary aim is to modify the learned system s.t. it becomes simpler to solve in $\left[0.25, 0.35\right]$. If we use unbiased sampling, the probability that we regularize at $\treg \in \left[0.25, 0.35\right]$ is $0.1$ (which is low). The problem gets even more severe if the range is lowered. An extreme version of this problem is observed for stiff systems like Robertson's Equations~(See \Cref{fig:robertson_stiff_system}) where $75\%$ of the time is spent in solving $5\%$ of the problem. We note that these extreme scenarios rarely occur for traditional deep learning tasks since \citet{pal2021opening} observed minor speedups using stiffness regularization. However, the problem that some parts of the dynamical system are harder to integrate persists, and designing a regularization scheme targeting those parts is highly desirable.
+
+We considered a simple scenario where the learned dynamical system was fixed. However, while training NDEs, this system evolves with training, and apriori predicting the more difficult portions to integrate is not feasible. Adaptive solvers take more frequent steps in the parts of the DE where it is harder to integrate. \citet{anantharaman2020accelerating} leveraged this property of adaptive solvers to learn surrogates for stiff systems. Since these solvers adapt to concentrate around the most numerically difficult time points, we automatically obtain the time points where we want to regularize the model. Hence, for our biased sampling regularize, we uniformly sample the regularization timepoint $\treg$ from the time points at which the solver solved the differential equation.
+
+\begin{table}[t]
+  \centering
+  \adjustbox{max width=\textwidth}{
+    \centering
+    \begin{tabular}{lcc}
+      \toprule
+      \thead{Sensitivity Algorithm}                                          & \thead{Memory Requirement}                 & \thead{Memory Requirement with Local Reularization}         \\
+      \midrule
+      Backsolve Adjoint \citep{chen2018neural}                               & $\bigO{s}$                                 & $\bigO{s \times (1 + \mathrm{stages})}$                                \\
+      Backsolve Adjoint with Checkpointing \citep{chen2018neural}            & $\bigO{s \times c}$                        & $\bigO{s \times (c  + \mathrm{stages})}$                      \\
+      Interpolating Adjoint \citep{hindmarsh2005sundials}                    & $\bigO{s \times t}$                        & $\bigO{s \times (t  + \mathrm{stages})}$                      \\
+      Interpolating Adjoint with Checkpointing \citep{hindmarsh2005sundials} & $\bigO{s \times c}$                        & $\bigO{s \times (c + \times \mathrm{stages})}$                       \\
+      Quadrature Adjoint \citep{kim2021stiff}                                & $\bigO{\left(s + p\right) \times t}$       & $\bigO{\left(s + p\right) \times t + s \times \mathrm{stages}}$      \\
+      Direct Reverse Mode Differentiation                                    & $\bigO{s \times t \times \mathrm{stages}}$ & $\bigO{s \times \left(t + 1\right) \times \mathrm{stages}}$ \\
+      \bottomrule
+    \end{tabular}
+  }
+  \caption{\textbf{Memory Requirements for various Sensitivity Algorithms for ODEs with Local Regularization}}
+  \label{tab:memory_requirements_sensitivity_analysis_odes_with_local_reg}
+\end{table}
+
+\section{Adjoint for Local Regularized Neural Differential Equations}
+\label{sec:adjoint_for_local_regularized_neural_differential_equations}
+
+Adjoint Sensitivity Analysis of Local Regularization works by piggy-backing on the existing adjoint sensitivity analysis algorithms. Our algorithm is effectively equivalent to using the default adjoint sensitivity algorithm with direct reverse mode differentiation through a single step of the solver, i.e. $ t = 1$. Thus, our algorithm adds a constant overhead of $\bigO{s \times \mathrm{stages}}$ memory to the underlying sensitivity algorithm.
+
+\section{Experimental Results}
+\label{sec:experimental_results_local_regularized_neural_des}
+
+In this section, we compare the effectiveness of unbiased and biased local regularization's effectiveness on the training and prediction timings of NDEs. We choose image classification and time series prediction problems in line with prior works on accelerating NDEs. We consider the following baselines:
+%
+\begin{enumerate}
+  \item Vanilla Neural ODE with Continuous Interpolating Adjoint.
+
+  \item Vanilla Neural SDE with discrete sensitivities.
+
+  \item Global Regularization of Neural Differential Equations using discrete sensitivity analysis \citep{pal2021opening}.
+
+  \item TayNODE~\citep{kelly2020learning} and STEER~\citep{ghosh2020steer} for models reported in \citet{pal2021opening}.
+\end{enumerate}
+%
+
+We use the DifferentialEquations.jl~\citep{rackauckas2019diffeqflux} and Lux.jl~\citep{pal2022lux} software stack written in the Julia Programming Language~\citep{Julia-2017} for all our experiments.
+
+Some details about the data presented in the tables:
+%
+\begin{itemize}
+  \item All experimental results in the tables marked with \textparagraph~ were taken directly from \citet{pal2021opening}.
+
+  \item We have tried to match the hardware details presented in the paper and the corresponding GitHub repository for \citet{pal2021opening}, but we note that differences in wall clock timings can be partially attributed to hardware.
+
+  \item TayNODE~\citep{kelly2020learning} uses a different ODE integrator. Hence the NFEs are not directly comparable.
+\end{itemize}
+%
+
+
+\subsection{MNIST Image Classification}
+\label{subsec:mnist}
+
+We train a neural differential equation classifier to map flattened MNIST~\citep{lecun1998gradient} images to their corresponding labels.
+
+\begin{table}[t]
+  \centering
+  \adjustbox{max width=\textwidth}{
+    \centering
+    \begin{tabular}{llllll}
+      \toprule
+      \thead{Method}        & \thead{Train Accuracy (\%)} & \thead{Test Accuracy (\%)}      & \thead{Training Time                                                                        \\ (hr)} & \thead{Prediction Time                                           \\ (s / batch)} & \thead{Testing NFE}\\
+      \midrule
+      Vanilla NODE          & \sdval{99.898}{0.066}       & \sdval{97.612}{0.163}           & \sdval{0.54}{0.001}      & \sdval{0.088}{0.020}     & \sdval{303.559}{3.194}                \\
+      STEER\cpaper          & \sdval{100.00}{0.000}       & \sdval{97.94\hp{0}}{0.03\hp{0}} & \sdval{1.31}{0.07\hp{0}} & \sdval{0.092}{0.002}     & \sdval{265.0\hp{0}\hp{0}}{3.46\hp{0}} \\
+      TayNODE\cpaper        & \sdval{\hp{0}98.98}{0.06}   & \sdval{97.89\hp{0}}{0.00}       & \sdval{1.19}{0.07}       & \sdval{0.079}{0.007}     & \sdval{\hp{0}80.3\hp{0}\hp{0}}{0.43}  \\
+      ERNODE\cpaper         & \sdval{\hp{0}99.71}{0.28}   & \sdval{97.32\hp{0}}{0.06}       & \sdval{0.82}{0.02}       & \sdval{0.060}{0.001}     & \sdval{177.0\hp{00}}{0.00}            \\
+      SRNODE\cpaper         & \sdval{100.00}{0.000}       & \sdval{98.08\hp{0}}{0.15}       & \sdval{1.24}{0.06}       & \sdval{0.094}{0.003}     & \sdval{259.0\hp{00}}{3.46}            \\
+      Local Unbiased ERNODE & \sdval{99.447}{0.039}       & \sdval{97.526}{0.131}           & \sdval{0.49}{0.002}      & \sdval{0.046}{0.002}     & \sdval{187.961}{1.812}                \\
+      Local Biased ERNODE   & \sdval{99.477}{0.051}       & \sdval{97.488}{0.016}           & \sdval{1.12}{0.065}      & \sdval{0.044}{0.002}     & \sdval{182.849}{1.578}                \\
+      \addlinespace
+      \addlinespace
+      Vanilla NSDE          & \sdval{98.27}{0.11}         & \sdval{96.66}{0.16}             & \sdval{2.70}{0.00}       & \sdval{\hp{0}0.51}{0.07} & \sdval{313.86}{2.94}                  \\
+      ERNSDE\cpaper         & \sdval{98.16}{0.11}         & \sdval{96.27}{0.35}             & \sdval{4.19}{0.04}       & \sdval{\hp{0}7.23}{0.14} & \sdval{184.67}{2.31}                  \\
+      SRNSDE\cpaper         & \sdval{98.79}{0.12}         & \sdval{96.80}{0.07}             & \sdval{8.54}{0.37}       & \sdval{14.50}{0.40}      & \sdval{382.00}{4.00}                  \\
+      Local Unbiased ERNSDE & \sdval{98.05}{0.09}         & \sdval{96.57}{0.13}             & \sdval{2.10}{0.01}       & \sdval{\hp{0}0.39}{0.10} & \sdval{228.93}{1.77}                  \\
+      Local Biased ERNSDE   & \sdval{98.02}{0.07}         & \sdval{96.44}{0.16}             & \sdval{1.90}{0.00}       & \sdval{\hp{0}0.36}{0.03} & \sdval{230.10}{0.71}                  \\
+      \bottomrule
+    \end{tabular}
+  }
+  \caption{\textbf{MNIST Image Classification using Neural DE}: Using local unbiased regularization on neural ODE speeds up training by $\mathit{1.1\times}$ and predictions by $\mathit{1.9\times}$ while reducing the total NFEs to $\mathit{0.619\times}$. Local Biased Regularization tends to slow down training for smaller models on GPU while it further reduces the NFEs by $\mathit{0.602\times}$. For Neural SDE, we observe a similar reduction of NFEs by \timeschange{0.729}{0.733} and a training time improvement of \timeschange{1.28}{1.42}. The best global regularization method gets lower NFEs but overall takes more wall clock than the best performing local regularization method.}
+  \label{tab:mnist_node_localreg}
+\end{table}
+
+\subsubsection{Neural Ordinary Differential Equation}
+\label{subsubsec:mnist_node}
+
+\begin{wrapfigure}{r}{0.5\linewidth}
+  \centering
+  \includegraphics[width=\linewidth]{../figures/local_regularizing_neural_des/mnist_ode.pdf}
+  \captionof{figure}{\textbf{MNIST Classification using Neural ODE}}
+  \label{fig:mnist_node_localreg}
+\end{wrapfigure}
+
+\textbf{Training Details:} We use the same model architecture as described in \citet{kelly2020learning}. Our model comprises of single hidden layered explicit model $f_\theta$ modeling the ODE dynamics followed by a linear classifier $g_\phi$.
+% %
+% \begin{align}
+%     z_\theta(x, t) &= \texttt{tanh}\left( W_1 \times [x; t] + b_1 \right)\\
+%     f_{\theta}(x, t) &= \texttt{tanh}\left( W_2 \times [z_\theta(x, t); t] + b_2 \right)\\
+%     g_\phi(x, t) &= \sigma\left(W_3 \times x + b_3\right)
+% \end{align}
+% %
+The hidden layer is 100-dimensional. We train with a batch size of 512 for a total of 7500 steps. We use Adam~\citep{kingma2017adam} with a constant learning rate of $0.001$. For error estimate regularization, we exponentially decrease the regularization coefficient from $2.5$ to $1.0$. We use Tsit5~\citep{tsitouras2011runge} as the ODE integrator with an absolute and relative tolerance of $10^{-8}$.\footnote{We note that this is not a realistic tolerance at which image classification models are trained. We use this tolerance to allow a direct comparison to prior works.}
+
+\textbf{Baselines:} We consider a Vanilla Neural ODE trained with the exact aforementioned specifications. All other baselines are directly taken from \citet{pal2021opening}.
+
+\textbf{Results:} We summarize the results in \Cref{tab:mnist_node_localreg} and \Cref{fig:mnist_node_localreg}. Using local regularization speeds up prediction in all cases while it leads to a minor slowdown during training for biased sampling.
+
+
+\subsubsection{Neural Stochastic Differential Equation}
+\label{subsubsec:mnist_nsde}
+
+\begin{wrapfigure}{r}{0.5\linewidth}
+  \centering
+  \includegraphics[width=\linewidth]{../figures/local_regularizing_neural_des/mnist_sde.pdf}
+  \captionof{figure}{\textbf{MNIST Classification using Neural SDE}}
+  \label{fig:mnist_nsde_localreg}
+\end{wrapfigure}
+
+\textbf{Training Details:} We downsample the flattened images to a 32-dimensional vector before feeding it into the Neural SDE which uses a diffusion model ($f_\theta$) having a 64-dimensional hidden layer and a linear drift model ($g_\phi$). Finally, a linear classifier ($h_\gamma$) predicts the label.
+%
+% \begin{align}
+%     f_\theta(x, t) &= W_2 \times \texttt{tanh}(W_1 \times x + b_1) + b_2\\
+%     g_\phi(x, t) &= W_3 \times x + b_3\\
+%     h_\gamma(x, t) &= W_4 \times x + b_4
+% \end{align}
+%
+We train our models on CPU with a batch size of $512$ for a total of $4000$ steps. We optimize the weights using Adam~\citep{kingma2017adam} with a constant learning rate of $0.01$. We use SOSRI2 SDE solver~\citep{rackauckas2017adaptive} with a tolerance of $0.14$. We fix our regularization coefficient to be $10^3$. For this experiment, we rely on discrete sensitivity analysis.
+
+\textbf{Baselines:} ERNSDE and SRNSDE results were taken from \citet{pal2021opening}. These were trained for $40$ epochs, nearly equivalent to training for $4000$ iterations.
+
+\textbf{Results:} We summarize the results in \Cref{tab:mnist_node_localreg} and \Cref{fig:mnist_nsde_localreg}. Local regularization improves training and prediction performance while keeping the test accuracy nearly constant.
+
+
+\subsection{Physionet Time Series Interpolation}
+\label{subsec:physionet}
+
+
+\begin{table}[t]
+  \centering
+  \adjustbox{max width=\textwidth}{
+    \centering
+    \begin{tabular}{lllll}
+      \toprule
+      \thead{Method}        & \thead{Test Loss ($\times 10^{-3}$)} & \thead{Training Time (hr)} & \thead{Prediction Time                        \\(s / batch)} & \thead{Testing NFE}  \\
+      \midrule
+      Vanilla NODE          & \sdval{3.41}{0.10}                   & \sdval{2.48}{0.22}         & \sdval{0.16}{0.01}     & \sdval{758.0}{25.87} \\
+      STEER\cpaper          & \sdval{3.48}{0.01}                   & \sdval{1.62}{0.26}         & \sdval{0.54}{0.06}     & \sdval{699.0}{141.1} \\
+      TayNODE\cpaper        & \sdval{4.21}{0.01}                   & \sdval{12.3}{0.32}         & \sdval{0.22}{0.02}     & \sdval{167.3}{11.93} \\
+      ERNODE\cpaper         & \sdval{3.57}{0.00}                   & \sdval{0.94}{0.13}         & \sdval{0.21}{0.02}     & \sdval{287.0}{17.32} \\
+      SRNODE\cpaper         & \sdval{3.58}{0.05}                   & \sdval{0.87}{0.09}         & \sdval{0.20}{0.01}     & \sdval{273.0}{0.000} \\
+      Local Unbiased ERNODE & \sdval{3.64}{0.07}                   & \sdval{2.31}{0.02}         & \sdval{0.09}{0.00}     & \sdval{422.0}{4.580} \\
+      Local Biased ERNODE   & \sdval{3.63}{0.08}                   & \sdval{2.12}{0.24}         & \sdval{0.10}{0.01}     & \sdval{463.0}{63.02} \\
+      \bottomrule
+    \end{tabular}
+  }
+  \caption{\textbf{Physionet Time Series Interpolation}: Local Regularization reduces NFEs by \timeschange{0.556}{0.610} reducing the prediction timings by \timeschange{1.6}{1.78}. Our methods additionally improve training timings by \timeschange{1.073}{1.167}. We note that the difference in training time compared to (E/S)RNODE methods is due to change in the sensitivity algorithm.}
+  \label{tab:physionet_node_localreg}
+\end{table}
+
+\textbf{Training Details:} We use the experimental setup for Physionet 2012 Challenge Dataset~\citep{citi2012physionet} from \citet{kelly2020learning}. We use a Latent Neural ODE~\citep{rubanova2019latent} to perform time series interpolation on the dataset. We use the preprocessed dataset from \citet{kelly2020learning} to ensure a fair comparison and independent runs are performed using an 80:20 split of the dataset.
+
+\begin{wrapfigure}{r}{0.5\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{../figures/local_regularizing_neural_des/physionet.pdf}
+  \captionof{figure}{\textbf{Physionet Time Series Interpolation using Latent ODE}}
+  \label{fig:physionet_localreg}
+\end{wrapfigure}
+
+For specific model architecture details, we refer the readers to \citet{pal2021opening}. We train the model for a total of $3000$ iterations using Adamax~\citep{kingma2017adam} with a learning rate of $0.01$ with $10^{-5}$ inverse decay per step. We use a batch size of $512$. We diverge from \citet{pal2021opening}, in using the regularization term as $\left(\eest\right)_{\treg} \cdot |dt|_{\treg}$ instead of the squared regularization term $\sum_j \left(\eest\right)_j^2$. Additionally, we decay the regularization coefficient exponentially from $100$ to $10$ over the $3000$ training iterations.
+
+\textbf{Baselines:} Vanilla NODE was trained with the exact aforementioned configuration. All the other baselines were trained using discrete sensitivity analysis, and the exact details are present in \citet{pal2021opening}.
+
+\textbf{Results:} We summarize the results in \Cref{fig:physionet_localreg} and \Cref{tab:physionet_node_localreg}.
+
+\subsection{CIFAR10 Image Classification}
+\label{subsec:cifar10_localreg}
+
+
+\begin{table}[t]
+  \centering
+  \adjustbox{max width=\textwidth}{
+    \centering
+    \begin{tabular}{lllllll}
+      \toprule
+      \thead{Configuration} & \thead{Method}    & \thead{Train                                                                                                                          \\ Accuracy (\%)} & \thead{Test\\ Accuracy (\%)} & \thead{Training Time\\ (s / batch)} & \thead{Prediction Time\\ (s / batch)} & \thead{Testing\\ NFE}\\
+      \midrule
+      Standard              & Vanilla           & \sdval{83.683}{1.450}       & \sdval{67.394}{0.849} & \sdval{0.457}{0.018} & \sdval{0.130}{0.013} & \sdval{115.315}{12.136}           \\
+                            & Local Unbiased ER & \sdval{83.665}{0.805}       & \sdval{67.678}{0.874} & \sdval{0.399}{0.014} & \sdval{0.096}{0.007} & \sdval{\hp{0}89.048}{\hp{0}7.335} \\
+                            & Local Biased ER   & \sdval{83.958}{1.032}       & \sdval{67.745}{0.824} & \sdval{0.555}{0.008} & \sdval{0.088}{0.003} & \sdval{\hp{0}81.301}{\hp{0}1.255} \\
+      \addlinespace
+      \addlinespace
+      Multi-Scale           & Vanilla           & \sdval{92.807}{12.458}      & \sdval{80.048}{6.740} & \sdval{0.572}{0.012} & \sdval{0.170}{0.005} & \sdval{\hp{0}27.616}{\hp{0}0.905} \\
+                            & Local Unbiased ER & \sdval{94.159}{\hp{0}9.694} & \sdval{80.432}{5.548} & \sdval{0.641}{0.025} & \sdval{0.175}{0.019} & \sdval{\hp{0}27.760}{\hp{0}0.177} \\
+                            & Local Biased ER   & \sdval{99.987}{\hp{0}0.023} & \sdval{83.460}{0.727} & \sdval{0.774}{0.293} & \sdval{0.163}{0.015} & \sdval{\hp{0}26.334}{\hp{0}0.992} \\
+      \bottomrule
+    \end{tabular}
+  }
+  \caption{\textbf{CIFAR10 Image Classification using Neural DE}: For the standard Neural ODE, local regularization reduces the NFE by \timeschange{0.705}{0.772}, thereby improving prediction timings by \timeschange{1.35}{1.477}. However, unregularized model training takes $\mathit{0.823\times}$ the time for the biased model. For multi-scale models, the NFE and prediction time improvements are marginal and come at the cost of higher training time.}
+  \label{tab:cifar10_node_localreg}
+\end{table}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{../figures/local_regularizing_neural_des/cifar10_tiny.pdf}
+  \caption{\textbf{CIFAR10 Image Classification using Standard Neural ODE}}
+  \label{fig:cifar10_tiny_localreg}
+\end{figure}
+
+\subsubsection{Neural Ordinary Differential Equation}
+\label{subsubsec:cifar10_node_localreg}
+
+% \input{figures/cifar10_tiny.tex}
+
+\textbf{Training Details:} We use the CNN architecture for CIFAR10 as described in \citet{poli2020hypersolvers}. We train the models for $31250$ steps with Adam~\citep{kingma2017adam} using a cosine-annealing learning rate scheduler from $0.003$ to $0.0001$. We train the models with a batch size of $32$ and keep the regularization coefficient fixed at $2.5$. We use Tsit5~\citep{tsitouras2011runge} with a tolerance of $10^{-4}$.
+
+\textbf{Results:} We summarize the results in \Cref{fig:cifar10_tiny_localreg} and \Cref{tab:cifar10_node_localreg}.
+
+\subsubsection{Multiscale Neural ODE}
+\label{subsubsec:cifar10_msnode}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{../figures/local_regularizing_neural_des/cifar10_tiny_msnode.pdf}
+  \caption{\textbf{CIFAR10 Image Classification using Multi-Scale Neural ODE}}
+  \label{fig:cifar10_tiny_msnode_localreg}
+\end{figure}
+
+\textbf{Training Details:} We modify the Tiny Multiscale DEQ architecture for CIFAR10 from \citet{bai_multiscale_2020} as Multiscale Neural ODE with Input Injection. To stabilize the training for larger models, we exponentially increase the regularization coefficient from $0.1$ to $5.0$. We train with a batch size of $128$ using VCAB3~\citep{wanner1996solving} with a tolerance of $0.05$.
+
+\textbf{Results:} We summarize the results in \Cref{fig:cifar10_tiny_msnode_localreg} and \Cref{tab:cifar10_node_localreg}. The benefits from regularization for NFEs and prediction timings seem marginal. However, regularization using biased sampling makes the training dynamics stable as observed in \Cref{fig:cifar10_tiny_msnode_localreg}.
+
+
+\section{Discussion}
+\label{sec:discussion_on_local_regularization_of_neural_des}
+
+In this chapter, we have shown that we can obtain similar properties to global regularization by regularizing dynamical systems at randomly sampled time points. Additionally, this comes with the benefit of not being forced into a specific sensitivity analysis method. We have taken every experiment in \citet{pal2021opening} and empirically showed that our local regularization works at par with global regularization. However, our experiments using stiffness estimate for local regularization did not yield positive results and were not presented in this chapter. Thus, we have demonstrated that we can ``close the blackbox'' and still leverage all the benefits of internal solver heuristics to improve training and predictions of neural differential equations.
+
+\subsection{Limitations}
+\label{sec:limitations}
+
+We note the following limitations of our work:
+%
+\begin{itemize}
+  \item Similar to \citet{pal2021opening}, if the objective is to learn the actual dynamical system, our method will not yield proper results. Our method is applicable only when the final state is relevant, i.e., in most classical deep learning tasks.
+
+  \item Regularization introduces a new regularization coefficient hyperparameter which, if not tuned correctly, can lead to unstable dynamics or might negate the scheme's usefulness.
+\end{itemize}
+%
