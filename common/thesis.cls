@@ -541,10 +541,14 @@
 
 	\large{Authored By: \phantom{xxxxxx} \SgIntAuthor}\\
 	\large{\phantom{Authored By: xxxxxx} \SgIntDepartment}\\
-	\large{\phantom{Authored By: xxxxxx} \SgIntCompletionDate}\\
+	\large{\phantom{Authored By: xxxxxx} \today}\\
 	\vspace{0.05in}\\
 	\large{Certified By: \phantom{xxxxxxx} \SgIntAdvisor}\\
-	\large{\phantom{Certified By: xxxxxxx} Professor of Mathematics}\\
+	\large{\phantom{Certified By: xxxxxxx} Professor of Applied Mathematics}\\
+	\large{\phantom{Certified By: xxxxxxx} Thesis Supervisor}\\
+	\vspace{0.02in}\\
+	\large{\phantom{Certified By: xxxxxxx} Chris Rackauckas}\\
+	\large{\phantom{Certified By: xxxxxxx} Applied Mathematics Instructor}\\
 	\large{\phantom{Certified By: xxxxxxx} Thesis Supervisor}\\
 	\vspace{0.05in}\\
 	\large{Accepted By: \phantom{xxxxxxx} Leslie A. Kolodziejski}\\

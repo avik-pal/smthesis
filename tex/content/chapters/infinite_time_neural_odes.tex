@@ -263,7 +263,7 @@ We use a fixed regularization weight of $\lambda_{\texttt{skip}} = 0.01$, and th
 \textbf{Results:} We summarize our results in \Cref{tab:imagenet_summary} and \Cref{fig:imagenet_small}. Skip (Reg.) variants accelerate the training of Continuous DEQ by $\mathit{1.57\times - 1.96\times}$, with a reduction of $\mathit{2.2\times - 4.2\times}$ in the backward pass timings.
 
 
-\section{Conclusion}
+\section{Discussion}
 \label{sec:infinite_time_neural_odes_conclusion}
 
 We have empirically shown the effectiveness of Continuous~DEQs as a faster alternative for Neural ODEs. Consistent with the ablation studies in \citet{bai2021neural}, we see that Skip DEQ in itself doesn't significantly improve the prediction or training timings for Discrete DEQs. Skip Reg. DEQ does, however, speeds up the inference for larger Discrete DEQs. However, combining Skip DEQ and Skip Reg. DEQ with Continuous DEQs, enable a speedup in backward pass by over $\mathit{2.8} - \mathit{5.9 \times}$. We hypothesize that this improvement is due to reduction in the condition number, which results in faster convergence of GMRES in the backward pass, however, acertaining this would require furthur investigation. We have demonstrated that our improvements to DEQs and Neural ODEs enable the drop-in replacement of Skip Continuous DEQs in any classical deep learning problem where continuous implicit models were previously employed.

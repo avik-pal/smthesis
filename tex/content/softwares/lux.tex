@@ -1,23 +1,46 @@
 \chapter{Lux.jl: Bridging Scientific Computing and Deep Learning}
 \label{chapter:lux_bridging_scientific_computing_and_deep_learning}
 
+% \citet{Rackauckas2020GeneralizedPL}
+
 \section{Design Philosophy}
 \label{sec:design_philosophy}
 
 \section{Scientific Computing vs Deep Learning}
 \label{sec:scientific_computing_vs_deep_learning}
 
-\section{Composability}
+\section{Showcase: Composability via Generic Parameterization}
 \label{sec:composability}
 
-\textbf{Main Challenges for Composability:}
+\subsection{Neural Differential Equations}
+\label{subsec:differential_equations_lux}
 
-\subsection{Differential Equations}
-\label{subsec:differential_equations}
+\subsection{Differentiable Convex Optimization}
+\label{subsec:convex_optimization_lux}
 
-\subsection{Convex Optimization}
-\label{subsec:convex_optimization}
+\subsection{Global Constrained \& Unconstrained Optimization}
+\label{subsec:global_optimization_lux}
 
-\subsection{}
-\label{subsec:}
+\subsection{Physics Informed Neural Networks}
+\label{subsec:physics_informed_neural_networks_lux}
 
+In this section, we will describe how to model Physics-Informed Neural Networks (PINNs)~\citep{raissi2019physics} that leverage neural networks to solve Partial Differential Equations~(PDEs).
+
+\inputminted[linenos, fontsize=\footnotesize]{julia}{../code/pinn.jl}
+
+For any realistic problem, we recommend using NeuralPDEs.jl~\citep{zubov2021neuralpde} -- a framework that leverages Lux.jl for PINNs.
+
+% \subsection{Higher Order Taylor Mode Automatic Differentiation}
+% \label{subsec:higher_order_taylor_mode_automatic_differentiation}
+
+\section{Leveraging Cross-Language Capabilities}
+\label{sec:cross_language_capabilities}
+
+\section{Performance}
+\label{sec:performance_lux}
+
+\section{Discussion}
+\label{sec:discussion_lux}
+
+\subsection{Current Limitations}
+\label{subsec:current_limitations}

@@ -1,7 +1,7 @@
-\chapter{Closing the Blackbox: Local Regularization for Neural DEs using Local Error Estimates}
+\chapter{Closing the Blackbox: Local Regularization of Neural DEs using Local Error Estimates}
 \label{chapter:local_regularization_neural_odes}
 
-Implicit Models, such as Neural Ordinary Differential Equations~\cite{chen2018neural} and Deep Equilibrium Models~\cite{bai2019deep, pal2022mixing}, have emerged as a promising technique to determine the depth of neural networks automatically. To maximize performance on a dataset, explicit models are tuned to the ``hardest'' training sample, which hurts the inference timings for ``easier'' -- more abundant -- samples. Using adaptive differential equation solvers allow these implicit models to choose the number of steps they need effectively. This idea of representing neural networks as ODEs has since been generalized to Stochastic Differential Equations~\citep{liu2019neural, rackauckas2020universal} and other architectures to improve robustness.
+Implicit Models, such as Neural Ordinary Differential Equations~\cite{chen2018neural} and Deep Equilibrium Models~\cite{bai_deep_2019, pal2022mixing}, have emerged as a promising technique to determine the depth of neural networks automatically. To maximize performance on a dataset, explicit models are tuned to the ``hardest'' training sample, which hurts the inference timings for ``easier'' -- more abundant -- samples. Using adaptive differential equation solvers allow these implicit models to choose the number of steps they need effectively. This idea of representing neural networks as ODEs has since been generalized to Stochastic Differential Equations~\citep{liu2019neural, rackauckas2020universal} and other architectures to improve robustness.
 
 Despite the rapid progress in these methods, the core problem of the scalability of these models is still persistent. Several solutions to these have been proposed:
 %
@@ -173,6 +173,21 @@ Some details about the data presented in the tables:
 \end{itemize}
 %
 
+\begin{figure}[t]
+  \centering
+  \begin{minipage}[c]{0.49\textwidth}
+    \includegraphics[width=\linewidth]{../figures/local_regularizing_neural_des/mnist_ode.pdf}
+    \caption{\textbf{MNIST Classification using Neural ODE}}
+    \label{fig:mnist_node_localreg}
+  \end{minipage}
+  \hfill
+  \begin{minipage}[c]{0.49\textwidth}
+    \includegraphics[width=\linewidth]{../figures/local_regularizing_neural_des/mnist_sde.pdf}
+    \caption{\textbf{MNIST Classification using Neural SDE}}
+    \label{fig:mnist_nsde_localreg}
+  \end{minipage}
+\end{figure}
+
 
 \subsection{MNIST Image Classification}
 \label{subsec:mnist}
@@ -211,13 +226,6 @@ We train a neural differential equation classifier to map flattened MNIST~\citep
 \subsubsection{Neural Ordinary Differential Equation}
 \label{subsubsec:mnist_node}
 
-\begin{wrapfigure}{r}{0.5\linewidth}
-  \centering
-  \includegraphics[width=\linewidth]{../figures/local_regularizing_neural_des/mnist_ode.pdf}
-  \captionof{figure}{\textbf{MNIST Classification using Neural ODE}}
-  \label{fig:mnist_node_localreg}
-\end{wrapfigure}
-
 \textbf{Training Details:} We use the same model architecture as described in \citet{kelly2020learning}. Our model comprises of single hidden layered explicit model $f_\theta$ modeling the ODE dynamics followed by a linear classifier $g_\phi$.
 % %
 % \begin{align}
@@ -235,13 +243,6 @@ The hidden layer is 100-dimensional. We train with a batch size of 512 for a tot
 
 \subsubsection{Neural Stochastic Differential Equation}
 \label{subsubsec:mnist_nsde}
-
-\begin{wrapfigure}{r}{0.5\linewidth}
-  \centering
-  \includegraphics[width=\linewidth]{../figures/local_regularizing_neural_des/mnist_sde.pdf}
-  \captionof{figure}{\textbf{MNIST Classification using Neural SDE}}
-  \label{fig:mnist_nsde_localreg}
-\end{wrapfigure}
 
 \textbf{Training Details:} We downsample the flattened images to a 32-dimensional vector before feeding it into the Neural SDE which uses a diffusion model ($f_\theta$) having a 64-dimensional hidden layer and a linear drift model ($g_\phi$). Finally, a linear classifier ($h_\gamma$) predicts the label.
 %
@@ -288,9 +289,11 @@ We train our models on CPU with a batch size of $512$ for a total of $4000$ step
 
 \begin{wrapfigure}{r}{0.5\textwidth}
   \centering
+  \vspace{-2em}
   \includegraphics[width=\linewidth]{../figures/local_regularizing_neural_des/physionet.pdf}
   \captionof{figure}{\textbf{Physionet Time Series Interpolation using Latent ODE}}
   \label{fig:physionet_localreg}
+  \vspace{-2em}
 \end{wrapfigure}
 
 For specific model architecture details, we refer the readers to \citet{pal2021opening}. We train the model for a total of $3000$ iterations using Adamax~\citep{kingma2017adam} with a learning rate of $0.01$ with $10^{-5}$ inverse decay per step. We use a batch size of $512$. We diverge from \citet{pal2021opening}, in using the regularization term as $\left(\eest\right)_{\treg} \cdot |dt|_{\treg}$ instead of the squared regularization term $\sum_j \left(\eest\right)_j^2$. Additionally, we decay the regularization coefficient exponentially from $100$ to $10$ over the $3000$ training iterations.

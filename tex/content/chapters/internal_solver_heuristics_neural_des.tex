@@ -5,8 +5,29 @@ How many hidden layers should you choose in your recurrent neural network? \cite
 
 In this thesis, we present a generally applicable method to force the neural differential equation training process to choose the least expensive option. We open the blackbox and show how using the numerical heuristics baked inside of these sophisticated differential equation solver codes allows for identifying the cheapest equations without requiring extra computation. However, ``opening the blackbox'' has several downsides -- they are \textit{harder to integrate into existing code-bases} and are \textit{more memory intensive}. Hence, we describe methods that exploit random sampling to leverage the benefits of ``opening the blackbox'' without actually requiring specialized training methods and the associated memory overhead.
 
+Our main contributions include:
+\begin{itemize}
+  \item We introduce a novel regularization scheme for neural differential equations based on the local error estimates and stiffness estimates. We observe that by white-boxing differential equation solvers to leverage pre-computed statistics about the neural differential equations, we can obtain faster training and prediction time while having a minimal effect on testing metrics.
+  \item We compare our method with various regularization schemes~\citep{kelly2020learning, ghosh2020steer}, which often use higher order derivatives and are difficult to incorporate within existing systems. We empirically show that regularization using cheap statistics can lead to as efficient predictions as the ones requiring higher order automatic differentiation~\citep{kelly2020learning, finlay2020train} without the increased training time.
+  \item We release our code\footnote{\url{https://github.com/avik-pal/RegNeuralDE.jl}}, implemented using the Julia Programming Language~\citep{Julia-2017} and SciML Software Suite~\citep{rackauckas2019diffeqflux}, with the intention of wider adoption of the proposed methods in the community.
+\end{itemize}
+
 The contents of this chapter has appeared previously in the publication: Pal, A., Ma, Y., Shah, V. and Rackauckas, C.V., 2021, July. Opening the Blackbox: Accelerating Neural Differential Equations by Regularizing Internal Solver Heuristics. In International Conference on Machine Learning (pp. 8325-8335). PMLR. \citep{pal2021opening}
 
+\begin{figure}[t]
+  \centering
+  \begin{minipage}[c]{0.49\textwidth}
+    \includegraphics[width=\linewidth]{../figures/global_regularization_neural_des/performance_v3.pdf}
+    \caption{\textbf{Training and Prediction Performance of Regularized NDEs} We obtain an average training and prediction speedup of $1.45$x and $1.84$x respectively for our best model on supervised classification and time series problems.}
+    \label{fig:performance}
+  \end{minipage}
+  \hfill
+  \begin{minipage}[c]{0.49\textwidth}
+    \includegraphics[width=\linewidth]{../figures/global_regularization_neural_des/motivation.pdf}
+    \caption{\textbf{Error and Stiffness Regularization Keeps Accuracy.} We show the fits of the unregularized/regularized Neural ODE variants on the Sprial equation. However, the unregularized variant requires $1083.0 \pm 57.55$ NFEs while the one regularized using the stiffness and error estimates requires only $676.2 \pm 68.20$ NFEs, reducing prediction time by nearly 50\%.}
+    \label{fig:motivation}
+  \end{minipage}
+\end{figure}
 
 \section{Opening the Blackbox: Global Regularization using Local Error \& Stiffness Estimates}
 \label{sec:global_regularization_using_local_error_and_stiffness_estimates}
@@ -43,11 +64,221 @@ giving a computational heuristic for the total stiffness of the equation. Notabl
 Notice that $\left(\eest\right)_j = \sum_{i = 1}^s \left(b_i - \tilde{b_i}\right) \cdot k_i$ cannot be constructed directly from the $\func{z}{t_j}$ trajectory of the ODE's solution. More precisely, the $k_i$ terms are not defined by the continuous ODE but instead by the chosen steps of the solver method. Continuous adjoint methods for neural ODEs~\citep{chen2018neural, zhuang2021mali} only define derivatives in terms of the ODE quantities. This is required in order exploit properties such as allowing different steps in reverse and reversibility for reduced memory, and in constructing solvers requiring fewer NFEs~\citep{kidger2020hey}. Indeed, computing the adjoint of each stage variable $k_i$ can be done, but is known as discrete sensitivity analysis and is known to be equivalent to automatic differentiation of the solver~\citep{zhang2014fatode}. Thus to calculate the derivative of the solution simultaneously to the derivatives of the solver states, we used direct automatic differentiation of the differential equation solvers for performing the experiments~\citep{innes2018don}. We note that discrete adjoints are known to be more stable than continuous adjoints~\citep{zhang2014fatode} and in the context of neural ODEs have been shown to stabilize the training process leading to better fits \citep{gholami2019anode,onken2020discretize}. While more memory intensive than some forms of the continuous adjoint, we note that checkpointing methods can be used to reduce the peak memory \citep{dauvergne2006data}. We note that this is equivalent to backpropagation of a fixed time step discretization if the step sizes are chosen in advance, and verify in the example code that no additional overhead is introduced.
 
 
-\section{Experimental Results for Global Regularization}
+\section{Experimental Results}
 \label{sec:experimental_results_global_regularized_neural_des}
 
+In this section, we consider the effectiveness of regularizing Neural Differential Equations (NDEs) on their training and prediction timings. We consider the following baselines while evaluating our models:
+%
+\begin{enumerate}
+  \item \textbf{Vanilla Neural (O/S)DE} with discrete sensitivities.
+  \item \textbf{STEER}: Temporal Regularization for Neural ODE models by stochastic sampling of the end time during training~\citep{ghosh2020steer}.
+  \item \textbf{TayNODE}: Regularizing the $K^{th}$ order derivatives of the Neural ODEs~\citep{kelly2020learning}\footnote{We use the original code formulation of the TayNODE in order to ensure usage of the specially-optimized Taylor-mode automatic differentiation technique~\citep{bettencourt2019taylor} in the training process. Given the large size of the neural networks, most of the compute time lies in optimized BLAS kernels which are the same in both implementations, meaning we do not suspect library to be a major factor in timing differences beyond the AD specifics.}.
+\end{enumerate}
+%
+We test our regularization on four tasks -- supervised image classification (\Cref{subsec:classificationode}) and time series interpolation (\Cref{subsec:ts_interp}) using Neural ODE, and fitting Neural SDE (\Cref{subsec:fitneuralsde}) and supervised image classification using Neural SDE (\Cref{subsec:classificationsde}). We use DiffEqFlux~\citep{rackauckas2019diffeqflux} and Flux~\citep{innes2018fashionable} for our experiments.
 
-\section{Discussion on Global Regularization of Neural DEs}
+
+\subsection{Neural Ordinary Differential Equations}
+
+In the following experiments, we use a Runge Kutta 5(4) solver~\citep{tsitouras2011runge} with absolute and relative tolerances of $1.4 \times 10^{-8}$ to solve the ODEs. To measure the prediction time, we use a test batch size equal to the training batch size.
+
+\subsubsection{Supervised Classification}
+\label{subsec:classificationode}
+
+\begin{figure}[t]
+  \centering
+  \begin{minipage}[c]{0.49\textwidth}
+    \includegraphics[width=\linewidth]{../figures/global_regularization_neural_des/mnist_node_v2}
+    \caption{\textbf{Number of Function Evaluations and Training Accuracy for Supervised MNIST Classification} Regularizing using ERNODE is the most consistent way to reduce the overall number of function evaluations. Using SRNODE alongside ERNODE stabilizes the training at the cost of increased prediction time.}
+    \label{fig:mnist_node_globalreg}
+  \end{minipage}
+  \hfill
+  \begin{minipage}[c]{0.49\textwidth}
+    \includegraphics[width=\linewidth]{../figures/global_regularization_neural_des/latent_ode_v2}
+    \caption{\textbf{Number of Function Evaluations and Training Loss for Physionet Time Series Interpolation} Regularized and Unregularized variants of the model have very similar trajectories for the training loss. We do notice a significant difference in the NFE plot. Using either Error Estimate Regularization or Stiffness Regularization is able to bound the NFE to $< 300$, compared to $\sim 700$ for STEER or unregularized Latent ODE.}
+    \label{fig:latent_ode_globalreg}
+  \end{minipage}
+\end{figure}
+
+\begin{table}[t]
+  \centering
+  \begin{adjustbox}{width=\linewidth,center}
+    \begin{tabular}{lccccc}
+      \toprule
+      \thead{Method}                    & \thead{Train Accuracy (\%)} & \thead{Test Accuracy (\%)} & \thead{Train Time (hr)} & \thead{Prediction Time (s)} & \thead{NFE}      \\
+      \midrule
+      Vanilla NODE                      & 100.0 $\pm$ 0.00            & 97.94 $\pm$ 0.02           & 0.98 $\pm$ 0.03         & 0.094 $\pm$ 0.010           & 253.0 $\pm$ 3.46 \\
+      STEER                             & 100.0 $\pm$ 0.00            & 97.94 $\pm$ 0.03           & 1.31 $\pm$ 0.07         & 0.092 $\pm$ 0.002           & 265.0 $\pm$ 3.46 \\
+      TayNODE                           & 98.98 $\pm$ 0.06            & 97.89 $\pm$ 0.00           & 1.19 $\pm$ 0.07         & 0.079 $\pm$ 0.007           & 080.3 $\pm$ 0.43 \\
+      \addlinespace
+      \textit{SRNODE (Ours)}            & 100.0 $\pm$ 0.00            & 98.08 $\pm$ 0.15           & 1.24 $\pm$ 0.06         & 0.094 $\pm$ 0.003           & 259.0 $\pm$ 3.46 \\
+      \textit{ERNODE (Ours)}            & 99.71 $\pm$ 0.28            & 97.32 $\pm$ 0.06           & 0.82 $\pm$ 0.02         & 0.060 $\pm$ 0.001           & 177.0 $\pm$ 0.00 \\
+      \addlinespace
+      STEER + \textit{SRNODE}           & 100.0 $\pm$ 0.00            & 97.88 $\pm$ 0.06           & 1.55 $\pm$ 0.27         & 0.101 $\pm$ 0.009           & 275.0 $\pm$ 12.5 \\
+      STEER + \textit{ERNODE}           & 99.91 $\pm$ 0.02            & 97.61 $\pm$ 0.11           & 1.37 $\pm$ 0.11         & 0.086 $\pm$ 0.018           & 197.0 $\pm$ 9.17 \\
+      \addlinespace
+      \textit{SRNODE} + \textit{ERNODE} & 99.98 $\pm$ 0.03            & 97.77 $\pm$ 0.05           & 1.37 $\pm$ 0.04         & 0.081 $\pm$ 0.006           & 221.0 $\pm$ 17.3 \\
+      \bottomrule
+    \end{tabular}
+  \end{adjustbox}
+  \caption{\textbf{MNIST Image Classification using Neural ODE} Using ERNODE obtains a training and prediction speedup of 16.33\% and 37.78\% respectively, at only 0.6\% reduced prediction accuracy. SRNODE doesn't help in isolation but is effective when combined with ERNODE to reduce the prediction time by 14.44\% while incurring a reduced test accuracy of only 0.17\%.}
+  \label{tab:mnist_node_globalreg}
+\end{table}
+
+\textbf{Training Details} We train a Neural ODE and a Linear Classifier to map flattened MNIST Images to their corresponding labels. Our model uses a two layered neural network $f_{\theta_1}$, as the ODE dynamics, followed by a linear classifier $g_{\theta_2}$, identical to the architecture used in \citet{kelly2020learning}.
+%
+\begin{align}
+  z_{\theta_1}(x, t) & = \tanh(W_1 [x; t] + B_1)                  \\
+  f_{\theta_1}(x, t) & = \tanh(W_2 [z_{\theta_1}(x, t); t] + B_2) \\
+  g_{\theta_2}(x, t) & = \sigma(W_3 x + B_3)
+\end{align}
+%
+where the parameters $W_1 \in \mathbb{R}^{100 \times 785}$, $B_1 \in \mathbb{R}^{100}$, $W_2 \in \mathbb{R}^{784 \times 101}$, $B_2 \in \mathbb{R}^{784}$, $W_3 \in \mathbb{R}^{10 \times 784}$, and $B_3 \in \mathbb{R}^{10}$. We use a batch size of $512$ and train the model for $75$ epochs using Momentum~\citep{qian1999momentum} with learning rate of $0.1$ and mass of $0.9$, and a learning rate inverse decay of $10^{-5}$ per iteration. For Error Estimate Regularization, we perform exponential annealing of the regularization coefficient from $100.0$ to $10.0$ over $75$ epochs. For Stiffness Regularization, we use a constant coefficient of $0.0285$.
+
+\textbf{Baselines} For the STEER baseline, we train the models by stochastically sampling the end time point from $\mathcal{U}(T - b, T + b)$ where $T = 1.0$ and $b = 0.5$\footnote{$b=0.25$ was also considered but final results were comparable}. We observe no training improvement but there is a minor improvement in prediction time. For the TayNODE baseline, we train the model with a reduced batch size of 100\footnote{Batch Size was reduced to ensure we reach a comparable train/test accuracy as the other trained models.}, $\lambda = 3.02 \times 10^{-3}$, and regularizing $3^{rd}$ order derivatives.
+
+\textbf{Results} Figure~\ref{fig:mnist_node_globalreg} visualizes the training accuracy and number of function evaluations over training. Table~\ref{tab:mnist_node_globalreg} summarizes the metrics from the trained baseline and proposed models -- Error Estimate Regularized Neural ODE (\textit{ERNODE}) and Stiffness Regularized Neural ODE (\textit{SRNODE}). Additionally, we perform ablation studies by composing various regularization strategies.
+
+\subsubsection{Time Series Interpolation}
+\label{subsec:ts_interp}
+
+\begin{table}[t]
+  \centering
+  \begin{adjustbox}{width=\linewidth,center}
+    \begin{tabular}{lccccc}
+      \toprule
+      \thead{Method}                    & \thead{Train Loss ($\times 10^{-3}$)} & \thead{Test Loss ($\times 10^{-3}$)} & \thead{Train Time (hr)} & \thead{Prediction Time (s)} & \thead{NFE}       \\
+      \midrule
+      Vanilla NODE                      & 3.48 $\pm$ 0.00                       & 3.55 $\pm$ 0.00                      & 1.75 $\pm$ 0.39         & 0.53 $\pm$ 0.12             & 733.0 $\pm$ 84.29 \\
+      STEER                             & 3.43 $\pm$ 0.02                       & 3.48 $\pm$ 0.01                      & 1.62 $\pm$ 0.26         & 0.54 $\pm$ 0.06             & 699.0 $\pm$ 141.1 \\
+      TayNODE                           & 4.21 $\pm$ 0.02                       & 4.21 $\pm$ 0.01                      & 12.3 $\pm$ 0.32         & 0.22 $\pm$ 0.02             & 167.3 $\pm$ 11.93 \\
+      \addlinespace
+      \textit{SRNODE (Ours)}            & 3.52 $\pm$ 1.44                       & 3.58 $\pm$ 0.05                      & 0.87 $\pm$ 0.09         & 0.20 $\pm$ 0.01             & 273.0 $\pm$ 0.000 \\
+      \textit{ERNODE (Ours)}            & 3.51 $\pm$ 0.00                       & 3.57 $\pm$ 0.00                      & 0.94 $\pm$ 0.13         & 0.21 $\pm$ 0.02             & 287.0 $\pm$ 17.32 \\
+      \addlinespace
+      STEER + \textit{SRNODE}           & 3.67 $\pm$ 0.02                       & 3.73 $\pm$ 0.02                      & 0.89 $\pm$ 0.08         & 0.20 $\pm$ 0.01             & 271.0 $\pm$ 12.49 \\
+      STEER + \textit{ERNODE}           & 3.41 $\pm$ 0.02                       & 3.48 $\pm$ 0.01                      & 1.03 $\pm$ 0.25         & 0.24 $\pm$ 0.05             & 269.0 $\pm$ 33.05 \\
+      \addlinespace
+      \textit{SRNODE} + \textit{ERNODE} & 3.48 $\pm$ 0.11                       & 3.56 $\pm$ 0.03                      & 1.12 $\pm$ 0.08         & 0.21 $\pm$ 0.01             & 263.0 $\pm$ 12.49 \\
+      \bottomrule
+    \end{tabular}
+  \end{adjustbox}
+  \caption{\textbf{Physionet Time Series Interpolation} All the regularized variants of Latent ODE (except STEER) have comparable prediction times. Additionally, the training time is reduced by $36\% - 50\%$ on using one of our proposed regularizers, while TayNODE increases the training time by $7$x. Overall, SRNODE has the best training and prediction timings while incurring an increased $0.85\%$ test loss.}
+  \label{tab:latent_ode_globalreg}
+\end{table}
+
+\textbf{Training Details} We use the Latent ODE~\citep{chen2018neural} model with RNN encoder to learn the trajectories for ICU Patients for Physionet Challenge 2012 Dataset~\citep{silva2012predicting}. We use the preprocessed data provided by \citet{kelly2020learning} to ensure consistency in results. For every independent run, we perform an $80:20$ split of the data for training and evaluation.
+
+Our model architecture is similar to the encoder-decoder models used in \citet{rubanova2019latent}. We use a 20-dimensional latent state and a 40-dimensional hidden state for the recognition model. Our ODE dynamics is given by a 4-layered neural network with 50 units and tanh activation. We train our models for $300$ epochs with a batchsize of $512$ and using Adamax~\citep{kingma2017adam} with a learning rate of $0.01$ and an inverse decay of $10^{-5}$. We minimize the negative log likelihood of the predictions and perform KL annealing with a coefficient of $0.99$.
+
+For Error Estimate Regularization, we perform exponential annealing of the regularization coefficient from $1000.0$ to $100.0$ over $300$ epochs. We note that using $\left(\mathcal{R}_{E}\right)_g = \sum_j \left(\eest\right)_j^2$, instead of $\left(\mathcal{R}_{E}\right)_g = \sum_j \left(\eest\right)_j \cdot |\dt_j|$, yields similar results with a constant regularization coefficient of $100.0$. For Stiffness Regularization, we use a constant coefficient of $0.285$.
+
+\textbf{Baselines} For STEER Baseline, we stochastically sample the timestep to evaluate the difference between interpolated and ground truth data. Essentially for the interval $(t_i, t_{i + 1})$, we evaluate the model at $\mathcal{U}(t_{i + 1} - \frac{t_{i + 1} - t_i}{2}, t_{i + 1} + \frac{t_{i + 1} - t_i}{2})$ and compare with the truth at $t_{i + 1}$. We sample end points after every iteration of the model. STEER reduces the training time but has no significant effect on the prediction time. TayNODE was trained by regularizing the $2^{nd}$ order derivatives and a coefficient of $0.01$ for 300 epochs and a batchsize of $512$. TayNODE had an exceptionally high training time $\sim 7\times$ compared to the unregularized baseline.
+
+\textbf{Results} Figure~\ref{fig:latent_ode_globalreg} shows the training MSE loss and the NFE counts for the considered models. Table~\ref{tab:latent_ode_globalreg} summarizes the metrics and wall clock timings for the baselines, proposed regularizers and their compositions with previously proposed regularizers. We observe that SRNODE provides the most significant speedup while ERNODE attains similar losses at slightly higher training and prediction times.
+
+\subsection{Neural Stochastic Differential Equations}
+
+In these experiments, we use SOSRI/SOSRI2~\citep{rackauckas2020sosri} to solve the Neural SDEs. The wall clock timings represent runs on a CPU.
+
+\subsubsection{Fitting Spiral Differential Equation}
+\label{subsec:fitneuralsde}
+
+\begin{table}[t]
+  \centering
+  % \begin{adjustbox}{width=\linewidth,center}
+  \begin{tabular}{lcccc}
+    \toprule
+    \thead{Method}         & \thead{Mean Squared Loss} & \thead{Train Time (s)} & \thead{Prediction Time (s)} & \thead{NFE}       \\
+    \midrule
+    Vanilla NSDE           & 0.0217 $\pm$ 0.0088       & 178.95 $\pm$ 20.22     & 0.07553 $\pm$ 0.0186        & 528.67 $\pm$ 6.11 \\
+    \addlinespace
+    \textit{SRNSDE (Ours)} & 0.0204 $\pm$ 0.0091       & 166.42 $\pm$ 14.51     & 0.07250 $\pm$ 0.0017        & 502.00 $\pm$ 4.00 \\
+    \textit{ERNSDE (Ours)} & 0.0227 $\pm$ 0.0090       & 173.43 $\pm$ 04.18     & 0.07552 $\pm$ 0.0008        & 502.00 $\pm$ 4.00 \\
+    \bottomrule
+  \end{tabular}
+  % \end{adjustbox}
+  \caption{\textbf{Spiral SDE} The ERNSDE attains a relative loss of 4\% compared to vanilla Neural SDE while reducing the training time and number of function evaluations. Using SRNSDE reduces both the training and prediction times by 7\% and 4\% respectively.}
+  \label{tab:fit_spiral_sde_globalreg}
+\end{table}
+
+\textbf{Training Details} In this experiment, we consider training a Neural SDE to mimic the dynamics of the Spiral Stochastic Differential Equation with Diagonal Noise (DSDE). Spiral DSDE is prescribed by the following equations:
+\begin{align}
+  \begin{split}
+    du_1 &= -\alpha u_1^3 dt + \beta u_2^3 dt + \gamma u_1 dW\\
+    du_2 &= -\beta u_1^3 dt - \alpha u_2^3 dt + \gamma u_2 dW
+  \end{split}
+\end{align}
+%
+where $\alpha = 0.1$, $\beta = 2.0$, and $\gamma = 0.2$. We
+generate data across $10000$ trajectories at 30 uniformly spaced points between $t \in [0, 1]$ (Figure~\ref{fig:fit_neural_sde_globalreg}). We parameterize our drift and diffusion functions using neural networks $f_\theta$ and $g_\phi$ via:
+\begin{align}
+  \begin{split}
+    f_\theta(x, t) &= W_2 \tanh(W_1 x^3 + B_1) + B_2\\
+    g_\phi(x, t) &= W_3 x + B_3
+  \end{split}
+\end{align}
+
+\begin{figure}[t]
+  \centering
+  \begin{minipage}[c]{0.49\textwidth}
+    \includegraphics[width=\linewidth]{../figures/global_regularization_neural_des/spiral_sde}
+    \caption{\textbf{Fitting a Neural SDE on Spiral SDE Data.} Regularizing has minimal effect on the learned dynamics with reduced training and prediction cost.}
+    \label{fig:fit_neural_sde_globalreg}
+  \end{minipage}
+  \hfill
+  \begin{minipage}[c]{0.49\textwidth}
+    \includegraphics[width=\linewidth]{../figures/global_regularization_neural_des/mnist_nsde_v2}
+    \caption{\textbf{Number of Function Evaluations and Training Error for Supervised MNIST Classification using Neural SDE} ERNSDE reduces the NFE below 300 with minimal error change while the unregularized version has NFE $\sim 400$.}
+    \label{fig:mnist_nsde_globalreg}
+  \end{minipage}
+\end{figure}
+
+where the parameters $W_1 \in \mathbb{R}^{50 \times 2}$, $B_1 \in \mathbb{R}^{50}$, $W_2 \in \mathbb{R}^{2 \times 50}$, $B_2 \in \mathbb{R}^{2}$, $W_3 \in \mathbb{R}^{2 \times 2}$, and $B_3 \in \mathbb{R}^{2}$. For fitting the drift and diffusion functions to the simulated data, we used a generalized method of moments loss function \citep{luck2016generalized,jeisman2006estimation}. Our objective is to train these parameters to minimize the $L_2$ distance between the mean ($\mu$) and variance ($\sigma^2$) of predicted and real data. Let, $\hat{\mu}_i$'s and $\hat{\sigma}^2_i$'s denote the means and variances respectively of the multiple predicted trajectories.
+\begin{equation}
+  \mathcal{L}(u_0; \theta, \phi) = \sum_{i = 1}^{30} \left[(\mu_i - \hat{\mu}_i)^2 + (\sigma^2_i - \hat{\sigma}^2_i)^2\right] + \lambda_r R_E
+\end{equation}
+
+The models were trained using AdaBelief Optimizer~\citep{zhuang2020adabelief} with a learning rate of $0.01$ for $250$ iterations. We generate 100 trajectories for each iteration to compute the $\hat{\mu}_i$s and $\hat{\sigma}^2_i$s.
+
+\textbf{Results} Table~\ref{tab:fit_spiral_sde_globalreg} summarizes the final results for the trained models for 3 different random seeds. We notice that even for this ``toy" problem, we can marginally improve training time while incurring a minimal penalty on the final loss.
+
+\subsubsection{Supervised Classification}
+\label{subsec:classificationsde}
+
+\textbf{Training Details} We train a Neural SDE model to map flattened MNIST Images to their corresponding labels. Our diffusion function uses a two layered neural network $f_{\theta_2}$ and the drift function is a linear map $g_{\theta_3}$. We use two additional linear maps -- $a_{\theta_1}$ mapping the flattened image to the hidden dimension and $b_{\theta_4}$ mapping the output of the Neural SDE to the logits.
+%
+\begin{align}
+  a_{\theta_1}(x, t) & = W_1 x + B_1                      \\
+  f_{\theta_2}(x, t) & = W_3 ~ \tanh(W_2 ~ x + B_2) + B_3 \\
+  g_{\theta_3}(x, t) & = W_4 ~ x + B_4                    \\
+  b_{\theta_4}(x, t) & = W_5 ~ x + B_5
+\end{align}
+%
+where the parameters $W_1 \in \mathbb{R}^{32 \times 784}$, $B_1 \in \mathbb{R}^{32}$, $W_2 \in \mathbb{R}^{32 \times 64}$, $B_2 \in \mathbb{R}^{64}$, $W_3 \in \mathbb{R}^{32 \times 64}$, $B_3 \in \mathbb{R}^{32}$, $W_4 \in \mathbb{R}^{10 \times 32}$, and $B_3 \in \mathbb{R}^{10}$. We use a batch size of $512$ and train the model for $40$ epochs using Adam~\citep{kingma2017adam} with learning rate of $0.01$, and an inverse decay of $10^{-5}$ per iteration. While making predictions we use the mean logits across $10$ trajectories. For Error Estimate and Stiffness Regularization, we use constant coefficients $10.0$ and $0.1$ respectively.
+
+\textbf{Results} Figure~\ref{fig:mnist_nsde_globalreg} shows the variation in NFE and Training Error during training. Table~\ref{tab:mnist_nsde} summarizes the final metrics and timings for all the trained models. We observe that SRNSDE doesn't improve the training/prediction time, similar to the MNIST Neural ODE Experiment~\ref{subsec:classificationode}. However, ERNSDE gives us a training and prediction speedup of $33.7\%$ and $52.02\%$ respectively, at the cost of $0.7\%$ reduced test accuracy.
+
+
+\begin{table}[t]
+  \centering
+  \begin{adjustbox}{width=\linewidth,center}
+    \begin{tabular}{lccccc}
+      \toprule
+      \textbf{Method}        & \textbf{Train Accuracy (\%)} & \textbf{Test Accuracy (\%)} & \textbf{Train Time (hr)} & \textbf{Prediction Time (s)} & \textbf{NFE}      \\
+      \midrule
+      Vanilla NSDE           & 98.97 $\pm$ 0.11             & 96.95 $\pm$ 0.11            & 6.32 $\pm$ 0.19          & 15.07 $\pm$ 0.93             & 411.33 $\pm$ 6.11 \\
+      \addlinespace
+      \textit{SRNSDE (Ours)} & 98.79 $\pm$ 0.12             & 96.80 $\pm$ 0.07            & 8.54 $\pm$ 0.37          & 14.50 $\pm$ 0.40             & 382.00 $\pm$ 4.00 \\
+      \textit{ERNSDE (Ours)} & 98.16 $\pm$ 0.11             & 96.27 $\pm$ 0.35            & 4.19 $\pm$ 0.04          & 07.23 $\pm$ 0.14             & 184.67 $\pm$ 2.31 \\
+      \bottomrule
+    \end{tabular}
+  \end{adjustbox}
+  \caption{\textbf{MNIST Image Classification using Neural SDE} ERNSDE obtains a training and prediction speedup of 33.7\% and 52.02\% respectively, at only 0.7\% reduced prediction accuracy.}
+  \label{tab:mnist_nsde}
+\end{table}
+
+\section{Discussion}
 \label{sec:discussion_on_global_regularization_of_neural_des}
 
 Numerical analysis has had over a century of theoretical developments leading to efficient adaptive methods for solving many common nonlinear equations such as differential equations. Here we demonstrate that by using the knowledge embedded within the heuristics of these methods we can accelerate the training process of neural ODEs.
@@ -56,7 +287,7 @@ We note that on the larger sized PhysioNet and MNIST examples we saw significant
 
 This result motivates efforts in differentiable programming~\citep{wang2018backpropagation, abadi2019simple, rackauckas2020generalized} which enables direct differentiation of solvers since utilizing the solver's heuristics may be crucial in the development of advanced techniques. This idea could be straightforwardly extended not only to other forms of differential equations, but also to other ``implicit layer'' machine learning methods. For example, Deep Equilibrium Models (DEQ)~\citep{bai_deep_2019} model the system as the solution to an implicit function via a nonlinear solver like Bryoden or Newton's method. Heuristics like the ratio of the residuals have commonly been used as a convergence criterion and as a work estimate for the difficulty of solving a particular nonlinear equation~\citep{wanner1996solving}, and thus could similarly be used to regularize for learning DEQs whose forward passes are faster to solve. Similarly, optimization techniques such as BFGS~\citep{kelley1999iterative} contain internal estimates of the Hessian which can be used to regularize the stiffness of ``optimization as layers'' machine learning architectures like OptNet~\citep{amos2017optnet}. However, in these cases we note that continuous adjoint techniques have a significant computational advantage over discrete adjoint methods because the continuous adjoint method can be computed directly at the point of the solution while discrete adjoints would require differentiating through the iteration process. Thus while a similar regularization would exist in these contexts, in the case of differential equations the continuous and discrete adjoints share the same computational complexity which is not the case in methods which iterate to convergence. Further study of these applications would be required in order to ascertain the effectiveness in accelerating the training process, though by extrapolation one may guess that at least the forward pass would be accelerated.
 
-\subsection{Limitations of Global Regularization using Error and Stiffness Estimates}
+\subsection{Limitations}
 \label{subsec:limitations_of_using_error_and_stiffness_estimates}
 
 While these experiments have demonstrated major performance improvements, it is pertinent to point out the limitations of the method. One major point to note is that this only applies to learning neural ODEs for maps $z(0) \mapsto z(1)$ as is used in machine learning applications of the architecture~\citep{chen2018neural}. Indeed, a neural ODE as an ``implicit layer'' for predictions in machine learning does not require identification of dynamical mechanisms. However, if the purpose is to learn the true governing dynamics a physical system from timeseries data, this form of regularization would bias the result, dampening higher frequency responses leading to an incorrect system identification. Approaches which embed neural networks into solvers could be used in such cases~\citep{shen2020deep,poli2020hypersolvers}. Indeed we note that such Hypereuler approaches could be combined with the ERNODE regularization on machine learning prediction problems, which could be a fruitful avenue of research. Lastly, we note that while either the local error and stiffness regularization was effective on each chosen equation, neither was effective on all equations and at this time there does not seem to be a clear a priori indicator as to which regularization is necessary for a given problem. While it seems the error regularization was more effective on the image classification tasks while the stiffness regularization was more effective on the time series task, we believe more experiments will be required in order to ascertain whether this is a common phenomena, possibly worthy of theoretical investigation.
