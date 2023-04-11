@@ -534,8 +534,8 @@
 		\large{\SgIntMakeUpperCase{Massachusetts Institute of Technology}}\\
 		\vspace{0.15in}
 		\large{\SgIntMakeUpperCase{June 2023}}\\
-		\vspace{0.4in}
-		\large{\copyright 2023 Massachusetts Institute of Technology. All rights reserved.}
+		\vspace{0.25in}
+		\small{\copyright 2023 Avik Pal. The work is licensed under \href{https://creativecommons.org/licenses/by-sa/2.0/}{CC BY-SA 2.0}.\\The author hereby grants to MIT a nonexclusive, worldwide, irrevocable, royalty-free license to exercise any and all rights under copyright, including to reproduce, preserve, distribute and publicly display copies of the thesis, or release the thesis under an open-access license.}
 		\vspace{0.4in}
 	\end{center}
 
@@ -547,14 +547,13 @@
 	\large{\phantom{Certified By: xxxxxxx} Professor of Applied Mathematics}\\
 	\large{\phantom{Certified By: xxxxxxx} Thesis Supervisor}\\
 	\vspace{0.02in}\\
-	\large{\phantom{Certified By: xxxxxxx} Chris Rackauckas}\\
+	\large{Certified By: \phantom{xxxxxxx} Chris Rackauckas}\\
 	\large{\phantom{Certified By: xxxxxxx} Applied Mathematics Instructor}\\
 	\large{\phantom{Certified By: xxxxxxx} Thesis Supervisor}\\
 	\vspace{0.05in}\\
 	\large{Accepted By: \phantom{xxxxxxx} Leslie A. Kolodziejski}\\
 	\large{\phantom{Accepted By: xxxxxxx} Professor of Electrical Engineering and Computer Science}\\
-	\large{\phantom{Accepted By: xxxxxxx} Chair, Department Committee on Graduate Students}\\
-
+	\large{\phantom{Accepted By: xxxxxxx} Chair, Department Committee on Graduate Students}
 	\SgIntClearDoublePage
 }
 

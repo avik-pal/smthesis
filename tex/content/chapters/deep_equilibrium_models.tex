@@ -25,72 +25,72 @@ In case of discrete dynamical systems, the steady state would be defined by stat
 There are two ways to solve steady-state problems:
 %
 \begin{enumerate}
-  \item \textbf{Treating it as a Nonlinear Problem}: \todo{chatgpt} Another approach to solving steady-state problems is to treat them as nonlinear problems, rather than as time-dependent problems. In this approach, the steady-state problem is formulated as a nonlinear equation of the form:
+  \item \textbf{Treating it as a Nonlinear Problem}: %\todo{chatgpt} Another approach to solving steady-state problems is to treat them as nonlinear problems, rather than as time-dependent problems. In this approach, the steady-state problem is formulated as a nonlinear equation of the form:
 
-        \begin{equation}
-          F(u) = 0
-        \end{equation}
+        % \begin{equation}
+        %   F(u) = 0
+        % \end{equation}
 
-        where $F(u)$ is a nonlinear function of the solution variable $u$. The solution variable $u$ could be a scalar, vector, or tensor quantity, depending on the problem. For example, for a steady-state heat conduction problem, $u$ could be the temperature distribution in the domain.
+        % where $F(u)$ is a nonlinear function of the solution variable $u$. The solution variable $u$ could be a scalar, vector, or tensor quantity, depending on the problem. For example, for a steady-state heat conduction problem, $u$ could be the temperature distribution in the domain.
 
-        The nonlinear equation is solved iteratively using a suitable nonlinear solver, such as the Newton-Raphson method or the quasi-Newton method. In each iteration, the nonlinear equation is linearized around the current guess for the solution, resulting in a linear system of the form:
+        % The nonlinear equation is solved iteratively using a suitable nonlinear solver, such as the Newton-Raphson method or the quasi-Newton method. In each iteration, the nonlinear equation is linearized around the current guess for the solution, resulting in a linear system of the form:
 
-        \begin{equation}
-          J(u_k) \delta u_k = -F(u_k)
-        \end{equation}
+        % \begin{equation}
+        %   J(u_k) \delta u_k = -F(u_k)
+        % \end{equation}
 
-        where $J(u_k)$ is the Jacobian matrix of $F(u)$ evaluated at the current guess $u_k$, and $\delta u_k$ is the update to the solution variable. The linear system is then solved using a suitable linear solver, such as direct methods or iterative methods.
+        % where $J(u_k)$ is the Jacobian matrix of $F(u)$ evaluated at the current guess $u_k$, and $\delta u_k$ is the update to the solution variable. The linear system is then solved using a suitable linear solver, such as direct methods or iterative methods.
 
-        The iterative process is continued until the residual, defined as $||F(u_k)||$, is sufficiently small, indicating that the solution has converged to the steady-state solution. The convergence criterion can be based on a specified tolerance, or on the rate of decrease of the residual.
+        % The iterative process is continued until the residual, defined as $||F(u_k)||$, is sufficiently small, indicating that the solution has converged to the steady-state solution. The convergence criterion can be based on a specified tolerance, or on the rate of decrease of the residual.
 
-        This approach has the advantage of being able to handle complex geometries, boundary conditions, and material properties, as well as nonlinear equations. However, it can be computationally expensive, especially for problems with a large number of degrees of freedom, and can be sensitive to the choice of initial guess and convergence criterion. Additionally, the linearization process can be challenging for highly nonlinear problems, requiring careful treatment of numerical instabilities and singularities.
+        % This approach has the advantage of being able to handle complex geometries, boundary conditions, and material properties, as well as nonlinear equations. However, it can be computationally expensive, especially for problems with a large number of degrees of freedom, and can be sensitive to the choice of initial guess and convergence criterion. Additionally, the linearization process can be challenging for highly nonlinear problems, requiring careful treatment of numerical instabilities and singularities.
 
-  \item \textbf{Treating it as an ODE}: \todo{chatgpt} Another approach to solving steady-state problems is to treat them as ordinary differential equations (ODEs) and use ODE solvers to find the solution. This approach involves converting the steady-state problem into a system of first-order ODEs by introducing a new variable, often called a "pseudo-time" or "residual time" variable, denoted by $t$. The steady-state solution is then found by solving the resulting system of ODEs until a steady-state is reached.
+  \item \textbf{Treating it as an ODE}:% \todo{chatgpt} Another approach to solving steady-state problems is to treat them as ordinary differential equations (ODEs) and use ODE solvers to find the solution. This approach involves converting the steady-state problem into a system of first-order ODEs by introducing a new variable, often called a "pseudo-time" or "residual time" variable, denoted by $t$. The steady-state solution is then found by solving the resulting system of ODEs until a steady-state is reached.
 
-        To illustrate this approach, consider the steady-state heat conduction problem described by the following equation:
+        % To illustrate this approach, consider the steady-state heat conduction problem described by the following equation:
 
-        \begin{equation}
-          \nabla \cdot (k \nabla T) + Q = 0
-        \end{equation}
+        % \begin{equation}
+        %   \nabla \cdot (k \nabla T) + Q = 0
+        % \end{equation}
 
-        where $k$ is the thermal conductivity, $T$ is the temperature, and $Q$ is a source term. The idea is to introduce a new variable $u = T - T_s$, where $T_s$ is a prescribed temperature that represents the steady-state solution. The problem is then transformed into a system of first-order ODEs as follows:
+        % where $k$ is the thermal conductivity, $T$ is the temperature, and $Q$ is a source term. The idea is to introduce a new variable $u = T - T_s$, where $T_s$ is a prescribed temperature that represents the steady-state solution. The problem is then transformed into a system of first-order ODEs as follows:
 
-        \begin{align}
-          \frac{\partial u}{\partial t} & = \frac{\partial T}{\partial t} \
-                                        & = \alpha \nabla^2 T - \frac{1}{\rho c_p} Q
-        \end{align}
+        % \begin{align}
+        %   \frac{\partial u}{\partial t} & = \frac{\partial T}{\partial t} \
+        %                                 & = \alpha \nabla^2 T - \frac{1}{\rho c_p} Q
+        % \end{align}
 
-        where $\alpha = k/(\rho c_p)$ is the thermal diffusivity. The boundary conditions for $u$ are given by:
+        % where $\alpha = k/(\rho c_p)$ is the thermal diffusivity. The boundary conditions for $u$ are given by:
 
-        \begin{align}
-          u(x,t)                        & = T(x,t) - T_s \
-          \frac{\partial u}{\partial n} & = \frac{\partial T}{\partial n}
-        \end{align}
+        % \begin{align}
+        %   u(x,t)                        & = T(x,t) - T_s \
+        %   \frac{\partial u}{\partial n} & = \frac{\partial T}{\partial n}
+        % \end{align}
 
-        where $n$ is the outward normal to the boundary.
+        % where $n$ is the outward normal to the boundary.
 
-        The ODE system can be solved using standard ODE solvers, such as the Runge-Kutta method or the Backward Differentiation Formula (BDF) method. The solution evolves in pseudo-time, and the steady-state solution is reached when the residual $\nabla \cdot (k \nabla T) + Q$ is small.
+        % The ODE system can be solved using standard ODE solvers, such as the Runge-Kutta method or the Backward Differentiation Formula (BDF) method. The solution evolves in pseudo-time, and the steady-state solution is reached when the residual $\nabla \cdot (k \nabla T) + Q$ is small.
 
-        One advantage of this approach is that it is straightforward to apply existing ODE solvers to find the solution. However, it can be computationally expensive, especially for problems with a large number of degrees of freedom. Additionally, the method can be sensitive to the choice of time step and the numerical scheme used for the ODE solver. Therefore, careful parameter tuning and convergence analysis are required to obtain accurate solutions.
-  \item \textbf{Using Pseudo-Transient Methods}: \todo{chatgpt} Pseudo-transient methods are a class of numerical techniques used to solve steady-state problems by treating them as time-dependent problems. In these methods, a transient problem is solved with a time step that is gradually reduced to zero, thereby allowing the system to evolve towards the steady-state solution. The methods are called "pseudo-transient" because the time step is treated as a parameter rather than as a physical time.
+        % One advantage of this approach is that it is straightforward to apply existing ODE solvers to find the solution. However, it can be computationally expensive, especially for problems with a large number of degrees of freedom. Additionally, the method can be sensitive to the choice of time step and the numerical scheme used for the ODE solver. Therefore, careful parameter tuning and convergence analysis are required to obtain accurate solutions.
+  \item \textbf{Using Pseudo-Transient Methods}:% \todo{chatgpt} Pseudo-transient methods are a class of numerical techniques used to solve steady-state problems by treating them as time-dependent problems. In these methods, a transient problem is solved with a time step that is gradually reduced to zero, thereby allowing the system to evolve towards the steady-state solution. The methods are called "pseudo-transient" because the time step is treated as a parameter rather than as a physical time.
 
-        The basic idea behind pseudo-transient methods is to write the steady-state problem as a time-dependent problem by introducing a "fictitious time" variable, denoted by $t$, and a "pseudo-time step" $\Delta t$. The problem is then formulated as a partial differential equation (PDE) with respect to both space and time. For example, for a steady-state heat conduction problem, the PDE would be:
+        % The basic idea behind pseudo-transient methods is to write the steady-state problem as a time-dependent problem by introducing a "fictitious time" variable, denoted by $t$, and a "pseudo-time step" $\Delta t$. The problem is then formulated as a partial differential equation (PDE) with respect to both space and time. For example, for a steady-state heat conduction problem, the PDE would be:
 
-        \begin{equation}
-          \rho c_p \frac{\partial T}{\partial t} = \nabla \cdot k \nabla T + q
-        \end{equation}
+        % \begin{equation}
+        %   \rho c_p \frac{\partial T}{\partial t} = \nabla \cdot k \nabla T + q
+        % \end{equation}
 
-        where $\rho$ is the density, $c_p$ is the specific heat, $k$ is the thermal conductivity, $T$ is the temperature, and $q$ is the heat source term. In the pseudo-transient method, the time derivative is replaced by a finite difference approximation, resulting in a time-dependent problem:
+        % where $\rho$ is the density, $c_p$ is the specific heat, $k$ is the thermal conductivity, $T$ is the temperature, and $q$ is the heat source term. In the pseudo-transient method, the time derivative is replaced by a finite difference approximation, resulting in a time-dependent problem:
 
-        \begin{equation}
-          \rho c_p \frac{T^{n+1} - T^n}{\Delta t} = \nabla \cdot k \nabla T^{n+1} + q
-        \end{equation}
+        % \begin{equation}
+        %   \rho c_p \frac{T^{n+1} - T^n}{\Delta t} = \nabla \cdot k \nabla T^{n+1} + q
+        % \end{equation}
 
-        where $T^n$ and $T^{n+1}$ are the temperature solutions at pseudo-times $t^n$ and $t^{n+1} = t^n + \Delta t$, respectively.
+        % where $T^n$ and $T^{n+1}$ are the temperature solutions at pseudo-times $t^n$ and $t^{n+1} = t^n + \Delta t$, respectively.
 
-        The pseudo-time step $\Delta t$ is initially chosen to be large, and the transient problem is solved using a suitable numerical scheme, such as the finite difference method or the finite element method. As the solution approaches the steady state, the time step is gradually reduced, leading to a slower evolution of the solution. When the time step is sufficiently small, the solution converges to the steady state. The convergence can be accelerated by using adaptive time stepping, where the time step is adjusted based on the solution behavior.
+        % The pseudo-time step $\Delta t$ is initially chosen to be large, and the transient problem is solved using a suitable numerical scheme, such as the finite difference method or the finite element method. As the solution approaches the steady state, the time step is gradually reduced, leading to a slower evolution of the solution. When the time step is sufficiently small, the solution converges to the steady state. The convergence can be accelerated by using adaptive time stepping, where the time step is adjusted based on the solution behavior.
 
-        One advantage of pseudo-transient methods is that they can handle complex geometries and boundary conditions, as well as nonlinear and time-dependent equations. However, the method can be computationally expensive, especially for problems with a large number of degrees of freedom. Additionally, the method can be sensitive to the choice of time step and the numerical scheme used for the transient problem. Therefore, careful parameter tuning and convergence analysis are required to obtain accurate solutions.
+        % One advantage of pseudo-transient methods is that they can handle complex geometries and boundary conditions, as well as nonlinear and time-dependent equations. However, the method can be computationally expensive, especially for problems with a large number of degrees of freedom. Additionally, the method can be sensitive to the choice of time step and the numerical scheme used for the transient problem. Therefore, careful parameter tuning and convergence analysis are required to obtain accurate solutions.
 \end{enumerate}
 %
 
@@ -232,33 +232,33 @@ JFNK Methods are used to solve Linear System of Equations without actually compu
   \texttt{where } r_0 & = b - A x_0
 \end{align}
 %
-\todo{chatgpt}
-% In this section, we will describe Generalized Minimal Residual Method (GMRES) a popular JNFK method, that approximates the solution of $Ax = b$ using $x_n \in K_n$ which minimizes the Euclidean norm of the residual $r_n = b - A x_n$.
-The Generalized Minimal Residual Method (GMRES) is a widely used JNFK method for solving large-scale linear systems of equations of the form $Ax=b$. GMRES is an iterative method that generates a sequence of approximate solutions $x_k \in K_k$, where $K_k$ is the Krylov subspace of dimension $k$. GMRES seeks to find the approximate solution $x_k$ that minimizes the Euclidean norm of the residual $r_k = b - Ax_k$ over the subspace $K_k$. Specifically, GMRES solves the minimization problem
-%
-\begin{equation}
-  \min_{x \in K_k} |b - Ax|_2,
-\end{equation}
-%
-where $| \cdot |2$ denotes the Euclidean norm. The solution $x_k$ is obtained using the Arnoldi iteration, which generates an orthogonal basis ${q_1, q_2, \dots, q{k+1}}$ for $K_{k+1}$ using the Arnoldi algorithm. The Arnoldi algorithm constructs the upper Hessenberg matrix $H_k \in \mathbb{R}^{(k+1) \times k}$ and the vector $q_{k+1}$ such that
+% \todo{chatgpt}
+% % In this section, we will describe Generalized Minimal Residual Method (GMRES) a popular JNFK method, that approximates the solution of $Ax = b$ using $x_n \in K_n$ which minimizes the Euclidean norm of the residual $r_n = b - A x_n$.
+% The Generalized Minimal Residual Method (GMRES) is a widely used JNFK method for solving large-scale linear systems of equations of the form $Ax=b$. GMRES is an iterative method that generates a sequence of approximate solutions $x_k \in K_k$, where $K_k$ is the Krylov subspace of dimension $k$. GMRES seeks to find the approximate solution $x_k$ that minimizes the Euclidean norm of the residual $r_k = b - Ax_k$ over the subspace $K_k$. Specifically, GMRES solves the minimization problem
+% %
+% \begin{equation}
+%   \min_{x \in K_k} |b - Ax|_2,
+% \end{equation}
+% %
+% where $| \cdot |2$ denotes the Euclidean norm. The solution $x_k$ is obtained using the Arnoldi iteration, which generates an orthogonal basis ${q_1, q_2, \dots, q{k+1}}$ for $K_{k+1}$ using the Arnoldi algorithm. The Arnoldi algorithm constructs the upper Hessenberg matrix $H_k \in \mathbb{R}^{(k+1) \times k}$ and the vector $q_{k+1}$ such that
 
-\begin{equation}
-  AQ_k = Q_{k+1} H_k,
-\end{equation}
+% \begin{equation}
+%   AQ_k = Q_{k+1} H_k,
+% \end{equation}
 
-where $Q_k = [q_1, q_2, \dots, q_k]$ and $Q_{k+1} = [q_1, q_2, \dots, q_{k+1}]$. The solution $x_k$ is then obtained by solving the least-squares problem
+% where $Q_k = [q_1, q_2, \dots, q_k]$ and $Q_{k+1} = [q_1, q_2, \dots, q_{k+1}]$. The solution $x_k$ is then obtained by solving the least-squares problem
 
-\begin{equation}
-  \min_{y \in \mathbb{R}^k} | \beta e_1 - H_k y |_2,
-\end{equation}
+% \begin{equation}
+%   \min_{y \in \mathbb{R}^k} | \beta e_1 - H_k y |_2,
+% \end{equation}
 
-where $\beta = |b|_2$ and $e_1$ is the first standard basis vector. The approximate solution is then given by
+% where $\beta = |b|_2$ and $e_1$ is the first standard basis vector. The approximate solution is then given by
 
-\begin{equation}
-  x_k = Q_k y_k.
-\end{equation}
+% \begin{equation}
+%   x_k = Q_k y_k.
+% \end{equation}
 
-GMRES is known to converge for a wide range of problems and is particularly effective for large-scale, sparse linear systems. However, it may require a large number of iterations to achieve convergence, and each iteration requires solving a linear system, which can be computationally expensive. Additionally, GMRES can be sensitive to the choice of preconditioner, which is used to improve the convergence rate of the algorithm.
+% GMRES is known to converge for a wide range of problems and is particularly effective for large-scale, sparse linear systems. However, it may require a large number of iterations to achieve convergence, and each iteration requires solving a linear system, which can be computationally expensive. Additionally, GMRES can be sensitive to the choice of preconditioner, which is used to improve the convergence rate of the algorithm.
 
 
 \subsection{Adjoint Equations}

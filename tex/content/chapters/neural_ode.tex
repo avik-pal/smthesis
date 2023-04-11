@@ -4,7 +4,7 @@
 \section{Ordinary Differential Equations}
 \label{sec:ordinary_differential_equations}
 
-Ordinary Differential Equations (ODEs) are equations defined by a relationship to its derivative. We can generally write an ODE as:
+Ordinary Differential Equations (ODEs) are equations defined by a relationship to their derivative. We can generally write an ODE as:
 %
 \begin{equation}
   \frac{dz}{dt} = \func{f}{z, p, t}
@@ -16,9 +16,9 @@ This effectively describes the evolution of a state $\func{z}{t}$. To compute $\
   \func{z}{t} = \int_{t_0}^{t} \func{f}{z, p, t} \, \dt
 \end{equation}
 %
-where $t_0$ is the initial time. However, computing these solutions analytically is almost impossible and hence we need to rely on numerical solvers. For this thesis, we will focus exclusively on Initial Value Problems (IVP) which specify the differential equations along with an initial condition, i.e., value of the state at $t_0$: $z(t_0)$. There are other kinds of ODE Problems like Boundary Value Problems (BVP) which specify additional conditions at the end of the interval, i.e., $z(t_1)$.
+where $t_0$ is the initial time. However, computing these solutions analytically is almost impossible, and hence we need to rely on numerical solvers. For this thesis, we will focus exclusively on Initial Value Problems (IVP) which specify the differential equations along with an initial condition, i.e., the value of the state at $t_0$: $z(t_0)$. There are other kinds of ODE Problems like Boundary Value Problems (BVP) which specify additional conditions at the end of the interval, i.e., $z(t_1)$.
 
-Numerical Solvers for ODEs can be broadly categorized into Implicit Methods and Explicit Methods. Explicit Methods compute the state of the dynamical system at a future time-point given the current state. Implicit Methods solve for the the state of the dynamical system at a future time-point given the current state \textit{and the later one}. For example, consider two extremely simple numerical solvers for an ODE:
+Numerical Solvers for ODEs can be broadly categorized into Implicit Methods and Explicit Methods. Explicit Methods compute the state of the dynamical system at a future time-point given the current state. Implicit Methods solve for the state of the dynamical system at a future time-point given the current state \textit{and the later one}. For example, consider two extremely simple numerical solvers for an ODE:
 %
 \begin{itemize}
   \item Euler Method (Explicit Method)~\citep{euler1824institutionum}:
@@ -35,30 +35,30 @@ Numerical Solvers for ODEs can be broadly categorized into Implicit Methods and 
         %
 \end{itemize}
 %
-Explicit methods tend to be faster than implicit methods but are not effective for solving stiff equations~\citep{wanner1996solving,kim2021stiff}. In this thesis, we will exclusively use explicit methods. A detailed discussion on implicit and explicit methods is beyond the scope of this thesis and we refer the readers to \citet{rackauckas2019scimlbook}.
+Explicit methods tend to be faster than implicit methods but are not effective for solving stiff equations~\citep{wanner1996solving,kim2021stiff}. In this thesis, we will exclusively use explicit methods. A detailed discussion on implicit and explicit methods is beyond the scope of this thesis, and we refer the readers to \citet{rackauckas2019scimlbook}.
 
 \section{Explicit ODE Solvers}
 \label{subsec:explicit_ode_solvers}
 
-In this section, we will briefly discuss ODE solvers that are relevant in the context of Neural ODEs. We start with Euler Method~(\Cref{subsec:euler_method}) to give a simple introduction to numerical solvers. Then we build upon that to describe the Tsitouras $\mathbf{5 (4)}$ Runge-Kutta Method~(\Cref{subsec:tsit5_method}) that servers as an excellent default for most ODEs at lower tolerances. Finally we describe $\mathbf{3^{rd}}$ order Adams-Bashforth Method~(\Cref{subsec:vcab3_method}), a multi-step method that we find to be particularly useful for Neural ODEs.
+In this section, we will briefly discuss ODE solvers that are relevant in the context of Neural ODEs. %  We start with Euler Method~(\Cref{subsec:euler_method}) to give a simple introduction to numerical solvers. Then we build upon that to describe the Tsitouras $\mathbf{5 (4)}$ Runge-Kutta Method~(\Cref{subsec:tsit5_method}) that servers as an excellent default for most ODEs at lower tolerances. Finally, we describe $\mathbf{3^{rd}}$ order Adams-Bashforth Method~(\Cref{subsec:vcab3_method}), a multi-step method that we find to be particularly useful for Neural ODEs.
 
-\subsection{Euler Method}
-\label{subsec:euler_method}
+% \subsection{Euler Method}
+% \label{subsec:euler_method}
 
-The forward Euler method is one of the simplest methods to numerically solve an IVP. Consider the Taylor series expansion of the function $\func{z}{t}$ around $t_n$:
-%
-\begin{equation}
-  \func{z}{t + \dt} = \func{z}{t} + \dt \cdot \left. \frac{\partial z}{\partial t} \right|_{t} + \frac{1}{2} \dt^2 \cdot \left. \frac{\partial^2 z}{\partial t^2} \right|_{t} + \bigO{\dt^3}
-\end{equation}
-%
-If we ignore the quadratic and higher order terms, we get the forward Euler method~\citep{euler1824institutionum}:
-%
-\begin{align}
-           & \func{z}{t + \dt} = \func{z}{t} + \dt \cdot \left. \frac{\partial z}{\partial t} \right|_{t} \\
-  \implies & z_{n + 1} = z_n + \dt \cdot \func{f}{z_n, p, t_n}
-\end{align}
-%
-This method is extremely simple however, has an extremely high local truncation error of $\bigO{\dt^2}$. Hence, this method is rarely used in the context of most IVPs and especially not for Neural ODEs.
+% The forward Euler method is one of the simplest methods to solve an IVP numerically. Consider the Taylor series expansion of the function $\func{z}{t}$ around $t_n$:
+% %
+% \begin{equation}
+%   \func{z}{t + \dt} = \func{z}{t} + \dt \cdot \left. \frac{\partial z}{\partial t} \right|_{t} + \frac{1}{2} \dt^2 \cdot \left. \frac{\partial^2 z}{\partial t^2} \right|_{t} + \bigO{\dt^3}
+% \end{equation}
+% %
+% If we ignore the quadratic and higher order terms, we get the forward Euler method~\citep{euler1824institutionum}:
+% %
+% \begin{align}
+%            & \func{z}{t + \dt} = \func{z}{t} + \dt \cdot \left. \frac{\partial z}{\partial t} \right|_{t} \\
+%   \implies & z_{n + 1} = z_n + \dt \cdot \func{f}{z_n, p, t_n}
+% \end{align}
+% %
+% This method is extremely simple however, has an extremely high local truncation error of $\bigO{\dt^2}$. Hence, this method is rarely used in the context of most IVPs and especially not for Neural ODEs.
 
 \subsection{Tsitouras $\mathbf{5 (4)}$ Runge-Kutta (Tsit5) Method}
 \label{subsec:tsit5_method}
@@ -70,18 +70,18 @@ Runge-Kutta (RK) Methods~\citep{runge1895numerische, kutta1901beitrag} are widel
    & z(t + dt) = z(t) + \dt \cdot \left( \sum_{i = 1}^s b_i \cdot k_i \right) \label{eq:rk_method_tsit5}
 \end{align}
 %
-\citet{tsitouras2011runge} presented a tableau of coefficients for a 6-stage RK method of order $5 (4)$. We have found Tsit5 to be an excellent default for most ODEs (including Neural ODEs) at lower tolerances. \todo{pull up some results from SciMLBenchmarks}
+\citet{tsitouras2011runge} presented a tableau of coefficients for a 6-stage RK method of order $5 (4)$. We have found Tsit5 to be an excellent default for most ODEs (including Neural ODEs) at lower tolerances.
 
 \subsection{$\mathbf{3^{rd}}$ order Adams-Bashforth (VCAB3) Method}
 \label{subsec:vcab3_method}
 
-Contrary to RK Methods, Multi-step methods compute $\func{z}{t}$ by efficiently using the information from previous time-steps. A linear multi-step method uses a linear interpolation to compute $z_{n + 1}$:
+Contrary to RK Methods, Multi-step methods compute $\func{z}{t}$ by efficiently using the information from previous time steps. A linear multi-step method uses linear interpolation to compute $z_{n + 1}$:
 %
 \begin{equation}
   z_{n + 1} = z_n + \dt \cdot \sum_{i = 0}^{s} \beta_i \cdot \func{f}{z_{n + 1 - i}, p, t_{n + 1 - i}} \qquad \texttt{given } \sum_{i = 0}^s \beta_i = 1
 \end{equation}
 %
-where $s$ is the number of steps. If $\beta_0 = 0$, then we have an explicit method. In this thesis, we will focus on Adams methods which involve solving:
+where $s$ is the number of steps. If $\beta_0 = 0$, then we have an explicit method. In this thesis, we will focus on Adams methods which involve solving the following:
 %
 \begin{equation}
   z_{n + 1} = z_n + \int_{t_n}^{t_{n + 1}} \func{f}{z(\tau), p, \tau} \cdot \mathrm{d}\tau
@@ -99,16 +99,12 @@ where $\mathcal{L}_{n + 1 - i}$'s are the Lagrange polynomials. For $s = 3$, we 
   z_{n + 1} = z_n + \frac{\dt}{12} \cdot \left( 23 \func{f}{z_n, p, t_n} - 16 \func{f}{z_{n - 1}, p, t_{n - 1}} + 5 \func{f}{z_{n - 2}, p, t_{n - 2}} \right)
 \end{equation}
 %
-This method has a local truncation error of $\bigO{\dt^3}$. Additionally, since this method evaluates $f$ very infrequently (by reusing the evaluations of $f$ from previous time-steps), it is efficient for ODEs with expensive evaluations of $f$ like a Neural ODE.
+This method has a local truncation error of $\bigO{\dt^3}$. Additionally, since this method evaluates $f$ infrequently (by reusing the evaluations of $f$ from previous time steps), it is efficient for ODEs with expensive evaluations of $f$ like a Neural ODE.
 
 \section{Adaptive Time-Stepping in Numerical ODE Solvers}
 \label{sec:adaptive_time_stepping}
 
-\todo{might need rewording}
-
-\todo{quite specific to RK methods. add comments for multistep methods}
-
-Adaptive solvers need to maximize the step size ($\dt$) while keeping the error estimate below the user-specified tolerances, i.e., they need to satisfy:
+Adaptive solvers need to maximize the step size ($\dt$) while keeping the error estimate below the user-specified tolerances, i.e., they need to satisfy the:
 %
 \begin{equation}
   \eest \leq \atol + \texttt{max}\left( |z(t)|, |z(t + \dt)|\right) \cdot \rtol
@@ -139,8 +135,6 @@ A classic result from Richardson extrapolation shows that $\eest = \| \Tilde{z}(
 
 We defer the discussion of error estimation schemes for stochastic RK integrators to  \citet{rackauckas2017adaptive, rackauckas2020sosri}.
 
-\todo{do a section on error estimation for stochastic RK integrators in Neural SDEs chapter}
-
 \section{Automatic Stiffness Detection}
 \label{sec:automatic_stiffness_detection}
 
@@ -150,13 +144,13 @@ While there is no precise definition of stiffness, the definition used in practi
   S = \text{max}\|\texttt{Re}(\lambda_i)\|
 \end{equation}
 %
-where $\lambda_i$ are the eigenvalues of the local Jacobian matrix. We note that various measures of stiffness have been introduced over the years, all being variations of conditioning of the pseudo-spectra~\citep{shampine2007stiff, higham1993stiffness}. The difficulty in defining a stiffness metric is that in each case, some stiff systems like the classic Robertson chemical kinetics or excited Van der Pol equation may violate the definition, meaning all such definitions are (useful) heuristics. In particular, it was shown that for explicit Runge-Kutta methods satisfying $c_x = c_y$ for some internal step, the term
+where $\lambda_i$ are the eigenvalues of the local Jacobian matrix. We note that various measures of stiffness have been introduced over the years, all being variations of conditioning of the pseudo-spectra~\citep{shampine2007stiff, higham1993stiffness}. The difficulty in defining a stiffness metric is that in each case, stiff systems like the classic Robertson chemical kinetics or excited Van der Pol equation may violate the definition, meaning all such definitions are (useful) heuristics. In particular, it was shown that for explicit Runge-Kutta methods satisfying $c_x = c_y$ for some internal step, the term
 %
 \begin{equation}
   \|\lambda\| \approx \left\Vert\frac{ \func{f}{t + c_x \cdot \dt,\sum_{i=1}^{s} a_{xi}} - \func{f}{t + c_y \cdot \dt,\sum_{i=1}^{s} a_{yi}}}{\sum_{i=1}^{s} a_{xi} - \sum_{i=1}^{s} a_{yi}}\right\Vert
 \end{equation}
 %
-serves as an estimate to $S$~\citep{shampine1977stiffness}. Since each of these terms are already required in the Runge-Kutta updates of \Cref{eq:rk_method_tsit5}, this gives a computationally-free estimate. This estimate is thus found throughout widely used explicit Runge-Kutta implementations, such as by the dopri method (found in suites like SciPy and Octave) to automatically exit when stiffness is detected~\citep{wanner1996solving}, and by switching methods which automatically change explicit Runge-Kutta methods to methods more suitable for stiff equations~\citep{rackauckas2019confederated}.
+serves as an estimate to $S$~\citep{shampine1977stiffness}. Since each of these terms are already required in the Runge-Kutta updates of \Cref{eq:rk_method_tsit5}, this gives a computationally-free estimate. This estimate is thus found throughout widely used explicit Runge-Kutta implementations, such as by the dopri method (found in suites like SciPy and Octave) to exit when stiffness is detected automatically~\citep{wanner1996solving}, and by switching methods which automatically change explicit Runge-Kutta methods to methods more suitable for stiff equations~\citep{rackauckas2019confederated}.
 
 \section{Sensitivity Analysis of ODEs}
 \label{sec:sensitivity_analysis_odes}
@@ -176,50 +170,45 @@ serves as an estimate to $S$~\citep{shampine1977stiffness}. Since each of these 
       \bottomrule
     \end{tabular}
   }
-  \caption{\textbf{Memory Requirements for various Sensitivity Algorithms for ODEs}}
+  \caption{\textbf{Memory Requirements for various Sensitivity Algorithms for ODEs}: $s$ is the number of states, $t$ is the number of time steps for the ODE Solve, $c$ is the number of checkpoints ($c << t$) and stages is the number of stages of the ODE solver.}
   \label{tab:memory_requirements_sensitivity_analysis_odes}
 \end{table}
 
-\todo{add notation information}
+
 
 \subsection{Continuous Sensitivity Analysis}
 \label{subsec:continuous_sensitivity_analysis_odes}
 
-% \todo{chatgpt}
+A detailed discussion of different continuous sensitivity algorithms is beyond the scope of this thesis. Instead, we present the algorithm of one of the popular methods (especially for training Neural ODEs) -- Backsolve Adjoint. We refer the readers to \citet[Appendix B]{chen2018neural} for rigorous proof of this method.
 
-% The adjoint method is a powerful technique for computing gradients of the parameters of a neural ordinary differential equation (ODE) model. The basic idea is to use the adjoint state method to efficiently compute gradients of a cost function with respect to the model parameters.
-
-% Let us consider a neural ODE model with state variable $z(t)$ and parameters $\theta$. The state variable $z(t)$ evolves according to the ODE:
-
-% \begin{equation}
-%   \frac{dz(t)}{dt} = f(z(t), t, \theta)
-% \end{equation}
-
-% where $f$ is a neural network parameterized by $\theta$. Given some initial state $z(0)$, the solution to the ODE can be obtained using an ODE solver.
-
-% Now, let us consider a cost function $J(z(T), \theta)$, where $T$ is the final time. We want to compute the gradient of the cost function with respect to the parameters $\theta$.
-
-% To compute this gradient, we introduce an adjoint variable $a(t)$ that satisfies the following ODE:
-
-% \begin{equation}
-%   \frac{da(t)}{dt} = -\frac{\partial J}{\partial z(t)}^T f(z(t), t, \theta)
-% \end{equation}
-
-% where $\frac{\partial J}{\partial z(t)}$ is the gradient of the cost function with respect to the state variable $z(t)$.
-
-% We can solve this adjoint ODE backwards in time using the same ODE solver that we used to solve the forward ODE. At each time step, we can use the adjoint variable $a(t)$ to compute the gradient of the cost function with respect to the parameters $\theta$:
-
-% \begin{equation}
-%   \frac{\partial J}{\partial \theta} = \int_0^T \frac{\partial f}{\partial \theta}^T a(t) dt
-% \end{equation}
-
-% where $\frac{\partial f}{\partial \theta}$ is the Jacobian matrix of $f$ with respect to the parameters $\theta$.
-
-% In practice, the adjoint method is computationally efficient since it requires solving only two ODEs (the forward ODE and the adjoint ODE) to compute the gradients of the cost function with respect to all the parameters of the model. This makes it especially useful for neural ODE models with large numbers of parameters.
-
+Let the gradient of the loss $\mathcal{L}$ wrt the final state of the ODE be $z(t_1)$ be $\frac{\partial L}{\partial z(t_1)}$. Define $\lambda(t)$ to be an augmented state. To compute the adjoint, we solve an augmented ODE from $t_1$ to $t_0$ with the initial condition:
+%
+\begin{equation}
+    s_0 = \left[ z(t_1), \frac{\partial L}{\partial z(t_1)}, 0_{|p|}, -\left(\frac{\partial L}{\partial z(t_1)}\right)^T \func{f}{z(t_1), p, t_1}\right]
+\end{equation}
+%
+The augmented dynamics is given by the following:
+%
+\begin{align}
+    \frac{dz(t)}{dt} &= \func{f}{z(t), p, t}\\
+    \frac{d\lambda(t)}{dt} &= -\lambda(t)^T \frac{\partial \func{f}{z(t), p, t}}{\partial z}\\
+    \frac{d\lambda_p(t)}{dt} &= -\lambda(t)^T \frac{\partial \func{f}{z(t), p, t}}{\partial p}\\
+    \frac{d\lambda_t(t)}{dt} &= -\lambda(t)^T \frac{\partial \func{f}{z(t), p, t}}{\partial t} 
+\end{align}
+%
+After solving this augmented ODE, we compute the final gradients as:
+%
+\begin{align}
+    \frac{d\mathcal{L}}{dp} = \lambda_p(t_0) &\qquad \frac{d\mathcal{L}}{dz(t_0)} = \lambda(t_0)\\
+    \frac{d\mathcal{L}}{dt_0} = \lambda_t(t_0) &\qquad \frac{d\mathcal{L}}{dt_1} = \lambda_t(t_1)
+\end{align}
+%
+In this algorithm, we don't need to store any of the intermediate activations in the forward solve, hence it is extremely memory efficient and has a complexity of $\bigO{s}$ (See \Cref{tab:memory_requirements_sensitivity_analysis_odes}).
 
 \subsection{Discrete Sensitivity Analysis}
 \label{subsec:discrete_sensitivity_analysis_odes}
+
+Discrete Sensitivity Analysis is the same as running any reverse mode AD software directly through the solver. Hence, we need to store the activations at every time step the function was evaluated making the memory cost of the method extremely high. This method doesn't scale too well for larger systems, however, has certain nice properties that can be exploited to accelerate Neural ODEs (See \Cref{sec:discussion_on_global_regularization_of_neural_des}).
 
 
 \section{Neural Ordinary Differential Equations}
@@ -236,6 +225,8 @@ where $f$ is an Explicit Neural Network, $\theta$ are the parameters of the neur
 
 \subsection{Optimize-then-Discretize vs Discretize-then-Optimize}
 \label{subsec:discussion_on_sensitivity_analysis_optimize_then_discretize_vs_discretize_then_optimize}
+
+\citet{onken2020discretize}
 
 \section{Common Applications of Neural ODEs}
 \label{sec:neural_odes_applications}
