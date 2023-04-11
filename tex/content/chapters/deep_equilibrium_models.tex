@@ -7,13 +7,13 @@
 Steady State Problems involve determining the equilibrium state of a system, i.e., the state of the system where the rate of change of the system is zero. Let, our steady state problem be defined as follows:
 %
 \begin{equation}
-  \frac{\partial z}{\partial t} = \func{f_\theta}{z, t} - z
+  \frac{dz}{dt} = \func{f_\theta}{z, t} - z
 \end{equation}
 %
-In case of continuous dynamical systems, the steady state would be determined by the partial derivative w.r.t. time being zero:
+In the case of continuous dynamical systems, the steady state would be determined by the partial derivative w.r.t. time being zero:
 %
 \begin{equation}
-  \frac{\partial z}{\partial t} = 0
+  \frac{dz}{dt} = 0
 \end{equation}
 %
 In case of discrete dynamical systems, the steady state would be defined by states remaining constant over time:
@@ -22,7 +22,7 @@ In case of discrete dynamical systems, the steady state would be defined by stat
   z_{n + 1} = z_n \implies \zstar = \func{f_\theta}{\zstar, \infty}
 \end{equation}
 %
-There are two ways to solve steady state problems:
+There are two ways to solve steady-state problems:
 %
 \begin{enumerate}
   \item \textbf{Treating it as a Nonlinear Problem}: \todo{chatgpt} Another approach to solving steady-state problems is to treat them as nonlinear problems, rather than as time-dependent problems. In this approach, the steady-state problem is formulated as a nonlinear equation of the form:
