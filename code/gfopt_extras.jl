@@ -1,10 +1,16 @@
 using CairoMakie, MakiePublication
 
 begin
-  fig = Figure()
+  fig, l1, l2, axs = Figure(), nothing, nothing, []
 
-  for (idx, method) in enumerate(["LN_COBYLA", "CMAES"])
-    ax = CairoMakie.Axis(fig[1, idx]; xlabel="x", ylabel=idx == 1 ? "y" : "", title=method)
+  _methods = ["LN_NEWUOA", "CMAES"]
+  for (idx, method) in enumerate(_methods)
+    ax = CairoMakie.Axis(fig[1, idx]; title=method)
+    push!(axs, ax)
+
+    if idx > 1
+      hideydecorations!(ax; grid=false)
+    end
 
     _θs = collect(0:1.0f-2:Float32(2π))
 
@@ -18,9 +24,11 @@ begin
 
     l1 = lines!(ax, _xs, _ys; linewidth=3)
     l2 = lines!(ax, _xs_pred, _ys_pred; linestyle=:dot, linewidth=3)
-
-    idx == 1 && axislegend(ax, [l1, l2], ["True", "Learned"]; position=:ct)
   end
+
+  linkyaxes!(axs...)
+
+  Legend(fig[1, length(_methods) + 1], [l1, l2], ["True", "Learned"])
 
   fig
 end

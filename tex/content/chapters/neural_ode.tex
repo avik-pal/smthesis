@@ -167,12 +167,12 @@ serves as an estimate to $S$~\citep{shampine1977stiffness}. Since each of these 
     \centering
     \begin{tabular}{lcc}
       \toprule
-      \thead{Sensitivity Algorithm}       & \thead{Memory Requirement}                 & \thead{Memory Requirement with Checkpointing} \\
+      \thead{Sensitivity Algorithm}                       & \thead{Memory Requirement}                 & \thead{Memory Requirement with Checkpointing} \\
       \midrule
-      Backsolve Adjoint \tocite           & $\bigO{s}$                                 & $\bigO{s \times c}$                           \\
-      Interpolating Adjoint \tocite       & $\bigO{s \times t}$                        & $\bigO{s \times c}$                           \\
-      Quadrature Adjoint \tocite          & $\bigO{\left(s + p\right) \times t}$       & -                                             \\
-      Direct Reverse Mode Differentiation & $\bigO{s \times t \times \mathrm{stages}}$ & -                                             \\
+      Backsolve Adjoint \citep{chen2018neural}            & $\bigO{s}$                                 & $\bigO{s \times c}$                           \\
+      Interpolating Adjoint \citep{hindmarsh2005sundials} & $\bigO{s \times t}$                        & $\bigO{s \times c}$                           \\
+      Quadrature Adjoint \citep{kim2021stiff}             & $\bigO{\left(s + p\right) \times t}$       & -                                             \\
+      Direct Reverse Mode Differentiation                 & $\bigO{s \times t \times \mathrm{stages}}$ & -                                             \\
       \bottomrule
     \end{tabular}
   }
@@ -185,43 +185,38 @@ serves as an estimate to $S$~\citep{shampine1977stiffness}. Since each of these 
 \subsection{Continuous Sensitivity Analysis}
 \label{subsec:continuous_sensitivity_analysis_odes}
 
-\subsubsection{Backsolve Adjoint}
-\label{subsubsec:backsolve_adjoint}
+% \todo{chatgpt}
 
-\todo{chatgpt}
+% The adjoint method is a powerful technique for computing gradients of the parameters of a neural ordinary differential equation (ODE) model. The basic idea is to use the adjoint state method to efficiently compute gradients of a cost function with respect to the model parameters.
 
-The adjoint method is a powerful technique for computing gradients of the parameters of a neural ordinary differential equation (ODE) model. The basic idea is to use the adjoint state method to efficiently compute gradients of a cost function with respect to the model parameters.
+% Let us consider a neural ODE model with state variable $z(t)$ and parameters $\theta$. The state variable $z(t)$ evolves according to the ODE:
 
-Let us consider a neural ODE model with state variable $z(t)$ and parameters $\theta$. The state variable $z(t)$ evolves according to the ODE:
+% \begin{equation}
+%   \frac{dz(t)}{dt} = f(z(t), t, \theta)
+% \end{equation}
 
-\begin{equation}
-  \frac{dz(t)}{dt} = f(z(t), t, \theta)
-\end{equation}
+% where $f$ is a neural network parameterized by $\theta$. Given some initial state $z(0)$, the solution to the ODE can be obtained using an ODE solver.
 
-where $f$ is a neural network parameterized by $\theta$. Given some initial state $z(0)$, the solution to the ODE can be obtained using an ODE solver.
+% Now, let us consider a cost function $J(z(T), \theta)$, where $T$ is the final time. We want to compute the gradient of the cost function with respect to the parameters $\theta$.
 
-Now, let us consider a cost function $J(z(T), \theta)$, where $T$ is the final time. We want to compute the gradient of the cost function with respect to the parameters $\theta$.
+% To compute this gradient, we introduce an adjoint variable $a(t)$ that satisfies the following ODE:
 
-To compute this gradient, we introduce an adjoint variable $a(t)$ that satisfies the following ODE:
+% \begin{equation}
+%   \frac{da(t)}{dt} = -\frac{\partial J}{\partial z(t)}^T f(z(t), t, \theta)
+% \end{equation}
 
-\begin{equation}
-  \frac{da(t)}{dt} = -\frac{\partial J}{\partial z(t)}^T f(z(t), t, \theta)
-\end{equation}
+% where $\frac{\partial J}{\partial z(t)}$ is the gradient of the cost function with respect to the state variable $z(t)$.
 
-where $\frac{\partial J}{\partial z(t)}$ is the gradient of the cost function with respect to the state variable $z(t)$.
+% We can solve this adjoint ODE backwards in time using the same ODE solver that we used to solve the forward ODE. At each time step, we can use the adjoint variable $a(t)$ to compute the gradient of the cost function with respect to the parameters $\theta$:
 
-We can solve this adjoint ODE backwards in time using the same ODE solver that we used to solve the forward ODE. At each time step, we can use the adjoint variable $a(t)$ to compute the gradient of the cost function with respect to the parameters $\theta$:
+% \begin{equation}
+%   \frac{\partial J}{\partial \theta} = \int_0^T \frac{\partial f}{\partial \theta}^T a(t) dt
+% \end{equation}
 
-\begin{equation}
-  \frac{\partial J}{\partial \theta} = \int_0^T \frac{\partial f}{\partial \theta}^T a(t) dt
-\end{equation}
+% where $\frac{\partial f}{\partial \theta}$ is the Jacobian matrix of $f$ with respect to the parameters $\theta$.
 
-where $\frac{\partial f}{\partial \theta}$ is the Jacobian matrix of $f$ with respect to the parameters $\theta$.
+% In practice, the adjoint method is computationally efficient since it requires solving only two ODEs (the forward ODE and the adjoint ODE) to compute the gradients of the cost function with respect to all the parameters of the model. This makes it especially useful for neural ODE models with large numbers of parameters.
 
-In practice, the adjoint method is computationally efficient since it requires solving only two ODEs (the forward ODE and the adjoint ODE) to compute the gradients of the cost function with respect to all the parameters of the model. This makes it especially useful for neural ODE models with large numbers of parameters.
-
-\subsubsection{Interpolating Adjoint}
-\label{subsubsec:interpolating_adjoint}
 
 \subsection{Discrete Sensitivity Analysis}
 \label{subsec:discrete_sensitivity_analysis_odes}

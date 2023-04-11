@@ -2,7 +2,7 @@ using ComponentArrays, FillArrays, Lux, Optimization, OptimizationCMAEvolutionSt
 
 r(θ) = exp(sin(θ)) - 2cos(4θ) + sin((2θ - oftype(θ, π)) / 12)^5
 
-θs = collect(0:1.0e-2:Float32(2π))
+θs = collect(0:1.0e-2:2π)
 rs = r.(θs)
 
 model = Chain(Dense(1 => 16, tanh), Dense(16 => 16, tanh), Dense(16 => 1))
@@ -17,10 +17,7 @@ function loss_function(ps, _)
 end
 
 opt_func = OptimizationFunction{false}(loss_function, Optimization.AutoZygote())
-opt_prob = OptimizationProblem(opt_func, ps_flat; lb=Fill(-Inf, length(ps_flat)), ub=Fill(Inf, length(ps_flat)))
+opt_prob = OptimizationProblem(opt_func, ps_flat)
 
-sols = Dict()
-sols["LN_COBYLA"] = solve(opt_prob,  OptimizationNLopt.NLopt.LN_COBYLA(); maxiters=100_000).u
-sols["CMAES"] = solve(opt_prob, CMAEvolutionStrategyOpt(); maxiters=100_000).u
-
-sols["PSO"] = solve(opt_prob,  PSO(); maxiters=1_000).u
+sol_LN_NEWUOA = solve(opt_prob, OptimizationNLopt.NLopt.LN_NEWUOA(); maxiters=100_000)
+sol_CMAES = solve(opt_prob, CMAEvolutionStrategyOpt(); maxiters=100_000)

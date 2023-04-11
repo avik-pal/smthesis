@@ -10,8 +10,13 @@
 \usepackage{lipsum}
 \usepackage{algorithm}
 \usepackage{algpseudocode}
-\usepackage{minted}
 \usepackage{textgreek}
+
+\usepackage{minted}
+\usepackage{tcolorbox}
+\usepackage{etoolbox}
+\BeforeBeginEnvironment{minted}{\begin{tcolorbox}}%
+\AfterEndEnvironment{minted}{\end{tcolorbox}}%
 
 % \mathtoolsset{showonlyrefs=true} % show only crossref-ed equation numbers
 
@@ -93,6 +98,7 @@
 
 % Unicode Character
 \DeclareUnicodeCharacter{2202}{\ensuremath{\partial}}
+\DeclareUnicodeCharacter{0302}{\ensuremath{\hat{}}}
 
 % Minted
-\usemintedstyle{xcode}
+% \usemintedstyle{xcode}
