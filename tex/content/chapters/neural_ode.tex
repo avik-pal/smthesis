@@ -184,23 +184,23 @@ A detailed discussion of different continuous sensitivity algorithms is beyond t
 Let the gradient of the loss $\mathcal{L}$ wrt the final state of the ODE be $z(t_1)$ be $\frac{\partial L}{\partial z(t_1)}$. Define $\lambda(t)$ to be an augmented state. To compute the adjoint, we solve an augmented ODE from $t_1$ to $t_0$ with the initial condition:
 %
 \begin{equation}
-    s_0 = \left[ z(t_1), \frac{\partial L}{\partial z(t_1)}, 0_{|p|}, -\left(\frac{\partial L}{\partial z(t_1)}\right)^T \func{f}{z(t_1), p, t_1}\right]
+  s_0 = \left[ z(t_1), \frac{\partial L}{\partial z(t_1)}, 0_{|p|}, -\left(\frac{\partial L}{\partial z(t_1)}\right)^T \func{f}{z(t_1), p, t_1}\right]
 \end{equation}
 %
 The augmented dynamics is given by the following:
 %
 \begin{align}
-    \frac{dz(t)}{dt} &= \func{f}{z(t), p, t}\\
-    \frac{d\lambda(t)}{dt} &= -\lambda(t)^T \frac{\partial \func{f}{z(t), p, t}}{\partial z}\\
-    \frac{d\lambda_p(t)}{dt} &= -\lambda(t)^T \frac{\partial \func{f}{z(t), p, t}}{\partial p}\\
-    \frac{d\lambda_t(t)}{dt} &= -\lambda(t)^T \frac{\partial \func{f}{z(t), p, t}}{\partial t} 
+  \frac{dz(t)}{dt}         & = \func{f}{z(t), p, t}                                           \\
+  \frac{d\lambda(t)}{dt}   & = -\lambda(t)^T \frac{\partial \func{f}{z(t), p, t}}{\partial z} \\
+  \frac{d\lambda_p(t)}{dt} & = -\lambda(t)^T \frac{\partial \func{f}{z(t), p, t}}{\partial p} \\
+  \frac{d\lambda_t(t)}{dt} & = -\lambda(t)^T \frac{\partial \func{f}{z(t), p, t}}{\partial t}
 \end{align}
 %
 After solving this augmented ODE, we compute the final gradients as:
 %
 \begin{align}
-    \frac{d\mathcal{L}}{dp} = \lambda_p(t_0) &\qquad \frac{d\mathcal{L}}{dz(t_0)} = \lambda(t_0)\\
-    \frac{d\mathcal{L}}{dt_0} = \lambda_t(t_0) &\qquad \frac{d\mathcal{L}}{dt_1} = \lambda_t(t_1)
+  \frac{d\mathcal{L}}{dp} = \lambda_p(t_0)   & \qquad \frac{d\mathcal{L}}{dz(t_0)} = \lambda(t_0) \\
+  \frac{d\mathcal{L}}{dt_0} = \lambda_t(t_0) & \qquad \frac{d\mathcal{L}}{dt_1} = \lambda_t(t_1)
 \end{align}
 %
 In this algorithm, we don't need to store any of the intermediate activations in the forward solve, hence it is extremely memory efficient and has a complexity of $\bigO{s}$ (See \Cref{tab:memory_requirements_sensitivity_analysis_odes}).
@@ -210,6 +210,17 @@ In this algorithm, we don't need to store any of the intermediate activations in
 
 Discrete Sensitivity Analysis is the same as running any reverse mode AD software directly through the solver. Hence, we need to store the activations at every time step the function was evaluated making the memory cost of the method extremely high. This method doesn't scale too well for larger systems, however, has certain nice properties that can be exploited to accelerate Neural ODEs (See \Cref{sec:discussion_on_global_regularization_of_neural_des}).
 
+\subsection{Tradeoffs between Continuous and Discrete Sensitivity Analysis}
+\label{subsec:discussion_on_sensitivity_analysis_optimize_then_discretize_vs_discretize_then_optimize}
+
+Using continuous sensitivity analysis or Optimize-then-Discretize (Opt-Disc) we ``optimize the continuous ODE and then discretize the optimal dynamics after training''~\citep{onken2020discretize}. Alternatively in discrete sensitivity analysis or Discretize-then-Optimize (Disc-Opt) we discretize the ODE and then compute the sensitivities over that discretization. Opt-Disc has a clear memory advantage over Disc-Opt (See \Cref{tab:memory_requirements_sensitivity_analysis_odes}). \citet{gholami2019anode} compared Disc-Opt and Opt-Disc and concluded the following for image classification tasks:
+%
+\begin{enumerate}
+  \item Opt-Disc leads to numerical instabilities in general deep neural network operations like convolutions, etc.
+  \item Inconsistent gradients in Opt-Disc can lead to divergence
+\end{enumerate}
+%
+\citet{onken2020discretize} extended this discussion to time-series problems and continuous normalizing flows and showed that Disc-Opt obtains similar or better results compared to Opt-Disc while having a lower computational cost.
 
 \section{Neural Ordinary Differential Equations}
 \label{sec:neural_odes}
@@ -222,11 +233,6 @@ Neural Ordinary Differential Equations are Implicit Neural Networks that use a n
 \end{align}
 %
 where $f$ is an Explicit Neural Network, $\theta$ are the parameters of the neural network, and we want to solve for the dynamics $\func{z}{t}$ in $t \in [t_0, t_1]$. Typically, $z_0$ is specified as the input from the previous layers. Then we can use sensitivity analysis (\Cref{sec:sensitivity_analysis_odes}) to compute $\left. v^T \frac{\partial \func{z}{t}}{\partial z_0} \right|_{t = t_1}$ and $\left. v^T \frac{\partial \func{z}{t}}{\partial g} \right|_{t = t_1}$ (where $v^T$ is obtained from back-propagation on the succeeding layers) and train the neural network end-to-end using gradient descent.
-
-\subsection{Optimize-then-Discretize vs Discretize-then-Optimize}
-\label{subsec:discussion_on_sensitivity_analysis_optimize_then_discretize_vs_discretize_then_optimize}
-
-\citet{onken2020discretize} \citet{gholami2019anode}
 
 \section{Common Applications of Neural ODEs}
 \label{sec:neural_odes_applications}
@@ -244,8 +250,12 @@ where $f$ is an Explicit Neural Network, $\theta$ are the parameters of the neur
 \label{sec:accelerating_neural_odes_prior_works}
 
 \subsection{Jacobian Regularization FFJORD}
+\label{subsec:jacobian_regularization_ffjord}
 
 \subsection{Taylor Neural ODE}
+\label{subsec:taylor_neural_odes}
+
+
 
 \subsection{STEER}
 \label{subsec:steer}
@@ -253,11 +263,40 @@ where $f$ is an Explicit Neural Network, $\theta$ are the parameters of the neur
 Neural ODEs tend to learn more complex dynamics as the training progresses. Since the complexity of the dynamics and time taken by the solver are intrinsically related, the training and inference time grows over training. \citet{ghosh2020steer} stochastically perturb the ending integration time-point of the ODE to allow the Neural ODE to learn simpler dynamics. During training, they reformulate the problem as:
 %
 \begin{align}
-  \func{z}{t_1}      & = \func{z}{t_0} + \int_{t_0}^{T} \func{f}{z(t), \theta, t} \, \dt \\
-  \texttt{where } T  & \sim \mathcal{U}(t_1 - b, t_1 + b)                                \\
+  \func{z}{t_1}      & = \func{z}{t_0} + \int_{t_0}^{T} \func{f}{z(t), p, t} \, \dt \\
+  \texttt{where } T  & \sim \mathcal{U}(t_1 - b, t_1 + b)                           \\
   \phantom{where } b & < t_1 - t_0
 \end{align}
 %
 
-
 \subsection{Hypersolvers for Neural ODEs}
+\label{subsec:hypersolvers_for_neural_odes}
+
+\citet{poli2020hypersolvers} proposed Hypersolvers to speed up inference of Neural ODEs. They trained a hypersolver to augment a base ODE solver to match the truncation error of a more accurate ODE solver. Let,
+%
+\begin{equation}
+  z_{n + 1} = z_n + \dt \cdot \psi(z_n, p, t_n)
+\end{equation}
+%
+where $\psi$ is the update from an Explicit ODE Integrator. We can represent the steps of a $\gamma^{th}$ order Hypersolved Neural ODE to be:
+%
+\begin{equation}
+  z_{n + 1} = z_n + \dt \cdot \psi(z_n, p, t_n) + \dt^{\gamma + 1} \cdot g_\omega(z_n, z_0, \dt, t_n)
+\end{equation}
+%
+where $g_\omega$ is a neural network that is trained to match the residual of the base ODE solver and a more accurate solver. The typical training process involves:
+%
+\begin{itemize}
+  \item Train a Neural ODE with an accurate ODE solver
+  \item Fixed the weights of the Neural ODE
+  \item Train the Hypersolver to match the residual of the Neural ODE solved using the base ODE integrator with hypersolver and the more accurate ODE solver.
+\end{itemize}
+%
+\citet{poli2020hypersolvers} demonstrated that Hypersolvers can speedup inference of Neural ODEs by 8x over Dopri5 for certain image classification tasks.
+
+\section{Discussion}
+\label{sec:discussion_neural_ode}
+
+In this chapter, we have introduced \todo{finish}
+
+Most of these prior works have focused on either accelerating the training or the inference. Additionally, speeding up inference often comes at the price of slower training or tools that are not easily applicable. In this thesis, we will describe methods that can accelerate both training and inference of Neural ODEs while being easily composable with existing methods.
