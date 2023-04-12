@@ -18,7 +18,24 @@
 \BeforeBeginEnvironment{minted}{\begin{tcolorbox}}%
 \AfterEndEnvironment{minted}{\end{tcolorbox}}%
 
+% \usepackage[T1]{fontenc}
+% \usepackage[sfdefault]{roboto}
+\usepackage{fontspec}
+\usepackage{libertine}
+
+\usepackage[libertine,cmintegrals,cmbraces,vvarbb]{newtxmath}
+\usepackage{wrapfig}
+\usepackage{../common/adpwrapfig}
+
+\usepackage{../common/julia-mono-listings}
+
 % \mathtoolsset{showonlyrefs=true} % show only crossref-ed equation numbers
+
+\lstdefinelanguage{JuliaLocal}{
+    language = Julia, % inherit Julia lang. to add keywords
+    morekeywords = [3]{thompson_sampling}, % define more functions
+    morekeywords = [2]{Beta, Distributions}, % define more types and modules
+}
 
 % Markers
 \newcommand{\cmark}{\ding{51}}%
@@ -97,8 +114,8 @@
 \renewcommand\thesubfigure{\thefigure.\arabic{subfigure}}
 
 % Unicode Character
-\DeclareUnicodeCharacter{2202}{\ensuremath{\partial}}
-\DeclareUnicodeCharacter{0302}{\ensuremath{\hat{}}}
+% \DeclareUnicodeCharacter{2202}{\ensuremath{\partial}}
+% \DeclareUnicodeCharacter{0302}{\ensuremath{\hat{}}}
 
 % Minted
 % \usemintedstyle{xcode}

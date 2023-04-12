@@ -226,7 +226,7 @@ where $f$ is an Explicit Neural Network, $\theta$ are the parameters of the neur
 \subsection{Optimize-then-Discretize vs Discretize-then-Optimize}
 \label{subsec:discussion_on_sensitivity_analysis_optimize_then_discretize_vs_discretize_then_optimize}
 
-\citet{onken2020discretize}
+\citet{onken2020discretize} \citet{gholami2019anode}
 
 \section{Common Applications of Neural ODEs}
 \label{sec:neural_odes_applications}
@@ -250,8 +250,6 @@ where $f$ is an Explicit Neural Network, $\theta$ are the parameters of the neur
 \subsection{STEER}
 \label{subsec:steer}
 
-\todo{write about the need to regularize Neural ODEs}
-
 Neural ODEs tend to learn more complex dynamics as the training progresses. Since the complexity of the dynamics and time taken by the solver are intrinsically related, the training and inference time grows over training. \citet{ghosh2020steer} stochastically perturb the ending integration time-point of the ODE to allow the Neural ODE to learn simpler dynamics. During training, they reformulate the problem as:
 %
 \begin{align}
@@ -261,6 +259,5 @@ Neural ODEs tend to learn more complex dynamics as the training progresses. Sinc
 \end{align}
 %
 
-\todo{some results overview if space permits}
 
 \subsection{Hypersolvers for Neural ODEs}
