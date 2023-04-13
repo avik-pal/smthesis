@@ -237,10 +237,7 @@ where $f$ is an Explicit Neural Network, $\theta$ are the parameters of the neur
 \section{Common Applications of Neural ODEs}
 \label{sec:neural_odes_applications}
 
-Neural ODEs have emerged as a direct alternative to explicit neural networks that can automatically adapt its depth to the problem. However, apart from a direct replace to standard explicit models, Neural ODEs have certain specific modelling advantages that make them a good fit for certain problems. In this section, we discuss some of those applications of Neural ODEs.
-
-\subsection{Continuous Alternative to Residual Networks}
-\label{subsec:continuous_alternative_to_residual_networks}
+Neural ODEs have emerged as a direct alternative to explicit neural networks that can automatically adapt its depth to the problem. However, apart from being a continuous replacement to standard explicit models, Neural ODEs have certain specific modelling advantages that make them a good fit for certain problems. In this section, we discuss some of those applications of Neural ODEs.
 
 \subsection{Density Estimation: Continuous Normalizing Flows and FFJORD}
 \label{subsec:density_estimation_neural_odes}
@@ -279,7 +276,7 @@ During training the Continuous Normalizing Flow (CNF) we want to obtain the samp
 Solving this problem reduces the time complexity of $\bigO{(DH + D^3)L}$ (where $H$ is the size of the largest hidden dimension in $f$ and $L$ is the number of transfomations) in Normalizing Flows to $\bigO{(DH + D^2)\hat{L}}$ (where $\hat{L}$ is the number of function evaluations for the CNF). \citet{grathwohl2018ffjord} further improve the time complexity by using the Hutchinson Trace Estimator~\citep{hutchinson1989stochastic} to estimate $\texttt{Tr}\left| \frac{\partial f(z(t), p, t)}{\partial z(t)} \right|$.
 %
 \begin{align}
-  \log{p_{z_1}(z(t_1))} & = \log{p_{z_0}(z(t_0))} - \bigintss_{t_0}^{t_1} \texttt{Tr}\left| \frac{\partial f(z(t), p, t)}{\partial z(t)} \right| \, \dt \\
+  \log{p_{z_1}(z(t_1))} & = \log{p_{z_0}(z(t_0))} - \bigintss_{t_0}^{t_1} \texttt{Tr}\left| \frac{\partial f(z(t), p, t)}{\partial z(t)} \right| \, \dt                                  \\
                         & = \log{p_{z_0}(z(t_0))} - \bigintss_{t_0}^{t_1} \mathbb{E}_{p_\epsilon} \left[ \epsilon^T \frac{\partial f(z(t), p, t)}{\partial z(t)} \epsilon \right] \, \dt \\
                         & = \log{p_{z_0}(z(t_0))} - \mathbb{E}_{p_\epsilon} \left[ \bigintss_{t_0}^{t_1} \epsilon^T \frac{\partial f(z(t), p, t)}{\partial z(t)} \epsilon \, \dt \right]
 \end{align}
@@ -289,18 +286,44 @@ $\epsilon^T \frac{\partial f(z(t), p, t)}{\partial z(t)}$ is a VJP that can be d
 \subsection{Time Series Predictions}
 \label{subsec:time_series_predictions}
 
-Standard Recurrent Neural Networks (RNNs) ignore the time spacing between subsequent predictions, hence when used in the context of time series predictions, they work well then the data is evenly separated. However, when the data is not uniformly spaced, 
+Standard Recurrent Neural Networks (RNNs) ignore the time spacing between subsequent predictions, hence when used in the context of time series predictions, they work well then the data is evenly separated. However, for irregularly spaced time series data, RNNs require discretizing the observation times or imputing the data as a preprocessing.
+
+\citet{chen2018neural} use an latent ODE model with an RNN encoder to capture the dynamics of the time series data. They use a Variational AutoEncoder (VAE) and compute the approximate posterior distribution of the latent variables $z$ given the data sequence $x$:
+%
+\begin{align}
+  \func{q}{z_0 \mid \left\{x_i, t_i \right\}_{i = 0}^N} & = \func{\mathcal{N}}{\mu_{z_0}, \sigma_{z_0}}             \\
+  \mu_{z_0}, \sigma_{z_0}                               & = \func{\texttt{RNN}}{\left\{x_i, t_i \right\}_{i = 0}^N}
+\end{align}
+%
+The generative process works by integrating a Neural ODE from $t_0$ to $t_N$:
+%
+\begin{equation}
+  \hat{x}_i = \hat{x}_{i - 1} + \bigintssss_{t_{i - 1}}^{t_i} \func{f}{z(t), p, t} \, \dt \qquad \forall i \in [N] \quad x_0 \sim \func{\mathcal{N}}{\mu_{z_0}, \sigma_{z_0}}
+\end{equation}
+%
+\citet{rubanova2019latent} extended this framework to allow encoding irregular spaced data. They used an ODE-RNN encoder, i.e. a Neural ODE that models the hidden state dynamics of the RNN. Let, $h_{t_i}$ be the hidden state of the RNN at time $t_i$. Since the encoding is performed backwards, i.e. from $t_N$ to $t_0$, the hidden state $h_{t_{i - 1}}$ is given by:
+%
+\begin{equation}
+  h_{t_{i - 1}} = h_{t_i} + \bigintssss_{t_i}^{t_{i - 1}} \func{g}{h(t), p, t} \, \dt
+\end{equation}
+%
+Using an ODE-RNN encoder, allows the model to encode non-uniformly spaced data by simply updating the integration time-span of the ODE.
 
 \section{Accelerating Neural ODEs}
 \label{sec:accelerating_neural_odes_prior_works}
 
-\subsection{Jacobian Regularization FFJORD}
-\label{subsec:jacobian_regularization_ffjord}
+Neural ODEs are competitive against explicit models in terms of accuracy and outperform them wrt memory requirements. However, their widespread adoption is bottlenecked by higher training costs and eventual slowdown over training due to emergent complicated dynamics. Hence, to make them competitive against explicit models several approaches have been proposed to accelerate Neural ODEs~\citep{finlay2020train, kelly2020learning, ghosh2020steer, poli2020hypersolvers, kidger2021hey, pal2021opening, xia2021heavy, zhuang2021mali, djeumou2022taylorlagrange, pal2023locally}. In this section, we discuss some of these prior works.
 
 \subsection{Taylor Neural ODE}
 \label{subsec:taylor_neural_odes}
 
-
+In \Cref{sec:adaptive_time_stepping}, we discussed adaptive timestepping for RK schemes. A limiting factor in taking large and accurate time steps is the $K^{th}$ order Taylor Coefficients of the solution trajectory. \citet{kelly2020learning} proposed the following regularization scheme to minimize the $K^{th}$ order Taylor Coefficients:
+%
+\begin{equation}
+  \left(\mathcal{R}_{K}\right)_g = \bigintsss_{t_0}^{t_1} \left\|\frac{d^K z(t)}{dt^K}\right\|_2^2 \dt
+\end{equation}
+%
+Computing the $K^{th}$-order gradients for $\frac{d^K z(t)}{dt^K}$ is computationally prohibitive. However, \citet{kelly2020learning} used Taylor-Mode Automatic Differentiation~\citep{griewank2008evaluating, bettencourt2019taylor} to reduce the exponential Time Complexity to $\bigO{K^2}$ or $\bigO{K \log{K}}$ (based on the operations).
 
 \subsection{STEER}
 \label{subsec:steer}
@@ -337,11 +360,11 @@ where $g_\omega$ is a neural network that is trained to match the residual of th
   \item Train the Hypersolver to match the residual of the Neural ODE solved using the base ODE integrator with hypersolver and the more accurate ODE solver.
 \end{itemize}
 %
-\citet{poli2020hypersolvers} demonstrated that Hypersolvers can speedup inference of Neural ODEs by 8x over Dopri5 for certain image classification tasks.
+\citet{poli2020hypersolvers} demonstrated that Hypersolvers can speedup inference of Neural ODEs by 8x over Dopri5~\citep{dormand1980family} for certain image classification tasks.
 
-\section{Discussion}
+\section{Conclusion}
 \label{sec:discussion_neural_ode}
 
-In this chapter, we have introduced \todo{finish}
+In this chapter, we have have briefly covered numerical methods to solve ODEs specifically in the context of Neural ODEs. Additionally, we have described some algorithms for sensitivity analysis of ODEs that allow us to compute gradients and perform gradient based optimization of Neural ODEs. We covered various applications of Neural ODEs like time series modelling and generative modelling. Finally, we have discussed prior works that have accelerated the training and inference of Neural ODEs.
 
-Most of these prior works have focused on either accelerating the training or the inference. Additionally, speeding up inference often comes at the price of slower training or tools that are not easily applicable. In this thesis, we will describe methods that can accelerate both training and inference of Neural ODEs while being easily composable with existing methods.
+However, most of these prior works have focused on either accelerating the training or the inference. Additionally, speeding up inference often comes at the price of slower training or tools that are not easily applicable. In this thesis, we will describe methods that can accelerate both training and inference of Neural ODEs while being easily composable with existing methods.
