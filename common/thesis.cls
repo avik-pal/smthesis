@@ -523,7 +523,7 @@
 		\vspace{0.15in}
 		\large{\SgIntMakeUpperCase{\SgIntAuthor}}\\
 		\vspace{0.10in}
-		\large{\SgIntMakeUpperCase{B.Tech., Indian Institute of Technology Kanpur (2017)}}\\
+		\large{B.Tech., Indian Institute of Technology Kanpur (2017)}\\
 		\vspace{0.25in}
 
 		\large{Submitted to the \SgIntDepartment~in Partial}\\
