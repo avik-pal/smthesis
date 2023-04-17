@@ -618,7 +618,7 @@
   \vspace{1.5em}
   \large{\textit{Thesis Supervisor:} \SgIntAdvisor}\\
   \large{\textit{Title:} Professor of Applied Mathematics}
-  \vspace{0.1em}\\
+  \vspace{0.25em}\\
   \large{\textit{Thesis Supervisor:} Chris Rackauckas}\\
   \large{\textit{Title:} Research Affiliate, Department of Applied Mathematics}
 
