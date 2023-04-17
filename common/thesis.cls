@@ -24,11 +24,11 @@
 % Define line spacing. The valid values are [onehalf] and double.
 % Note that before using \SgLineSpacing setspace package must be loaded.
 \define@choicekey*[Sg]{PhDThesis}{linespacing}[\val\nr]{onehalf,double}[onehalf]{%
-	\ifcase\nr\relax
-		\def \SgIntLineSpacing{\onehalfspacing}
-	\or
-		\def \SgIntLineSpacing{\doublespacing}
-	\fi
+  \ifcase\nr\relax
+    \def \SgIntLineSpacing{\onehalfspacing}
+  \or
+    \def \SgIntLineSpacing{\doublespacing}
+  \fi
 }
 \setkeys[Sg]{PhDThesis}{linespacing}
 
@@ -47,11 +47,11 @@
 % Right makes chapters and entries in frontmatter begin  only on right hand pages 
 % or on the next page available. Any puts them on the next available page.
 \define@choicekey*[Sg]{PhDThesis}{open}[\val\nr]{right,any}[any]{%
-	\ifcase\nr\relax
-		\def \SgIntOpen {openright}
-	\or
-		\def \SgIntOpen {openany}
-	\fi
+  \ifcase\nr\relax
+    \def \SgIntOpen {openright}
+  \or
+    \def \SgIntOpen {openany}
+  \fi
 }
 \setkeys[Sg]{PhDThesis}{open}
 
@@ -129,15 +129,15 @@
 
 \ifthenelse{\equal{\SgIntOpen}{openright}}
 {
-	% For adding extra blank page, if necessary, after chapter.
-	\RequirePackage{emptypage}
+  % For adding extra blank page, if necessary, after chapter.
+  \RequirePackage{emptypage}
 
-	% Define a command to leave a blank page. This is used in frontmatter to add 
-	% an empty page between ack, abstract, toc, lof and lot.
-	\newcommand{\SgIntClearDoublePage}{\clearpage{\pagestyle{empty}\cleardoublepage}}
+  % Define a command to leave a blank page. This is used in frontmatter to add 
+  % an empty page between ack, abstract, toc, lof and lot.
+  \newcommand{\SgIntClearDoublePage}{\clearpage{\pagestyle{empty}\cleardoublepage}}
 }
 {
-	\newcommand{\SgIntClearDoublePage}{\clearpage}
+  \newcommand{\SgIntClearDoublePage}{\clearpage}
 }
 
 % For disabling paragraph indenting and using a blank line between paragraphs.
@@ -206,12 +206,12 @@
 
 \newenvironment{SgAlgorithm}[1][t]
 {%
-	\begin{algorithm2e}[#1]
-		\linespread{1.3} % Set the line spacing to one and half.
-		\selectfont      % The linespread is effective only after selectfont.%
-		}
-		{%
-	\end{algorithm2e}
+  \begin{algorithm2e}[#1]
+    \linespread{1.3} % Set the line spacing to one and half.
+    \selectfont      % The linespread is effective only after selectfont.%
+    }
+    {%
+  \end{algorithm2e}
 }
 
 
@@ -226,11 +226,11 @@
 % set the formatting options.
 \newcommand{\SgIncludeBib}[1]
 {%
-	\clearpage                                 % Fix the page number in TOC.
-	\phantomsection                            % Fix the link in PDF.
-	\addcontentsline{toc}{chapter}{References} % Add the bibliography to TOC.
-	\bibliographystyle{plainnat}               % Set the bibliography style.
-	\bibliography{#1}                          % Include the bibliography file.
+  \clearpage                                 % Fix the page number in TOC.
+  \phantomsection                            % Fix the link in PDF.
+  \addcontentsline{toc}{chapter}{References} % Add the bibliography to TOC.
+  \bibliographystyle{plainnat}               % Set the bibliography style.
+  \bibliography{#1}                          % Include the bibliography file.
 }
 
 
@@ -263,14 +263,14 @@
 % Define header and footer for plain pages.
 \fancypagestyle{plain}
 {%
-	% Disable header.
-	\fancyhead{}
-	\renewcommand{\headrulewidth}{0pt}
+  % Disable header.
+  \fancyhead{}
+  \renewcommand{\headrulewidth}{0pt}
 
-	% Footer contains the page number on right side.
-	\fancyfoot{}
-	\fancyfoot[R]{\SgIntPageNumFormat\thepage}
-	\renewcommand{\footrulewidth}{0pt}
+  % Footer contains the page number on right side.
+  \fancyfoot{}
+  \fancyfoot[R]{\SgIntPageNumFormat\thepage}
+  \renewcommand{\footrulewidth}{0pt}
 }
 
 
@@ -301,25 +301,25 @@
 
 \newcommand{\SgAddToc}{\tableofcontents\SgIntClearDoublePage}
 \newcommand{\SgAddLof}{%
-	\newpage
-	\phantomsection % Requires hyperref; this is to fix the link.
-	\addcontentsline{toc}{section}{\numberline{}\hspace{-.35in}{\SgIntTocSectionFormat{}List of Figures}}
-	\listoffigures
-	\SgIntClearDoublePage
+  \newpage
+  \phantomsection % Requires hyperref; this is to fix the link.
+  \addcontentsline{toc}{section}{\numberline{}\hspace{-.35in}{\SgIntTocSectionFormat{}List of Figures}}
+  \listoffigures
+  \SgIntClearDoublePage
 }
 \newcommand{\SgAddLot}{%
-	\newpage
-	\phantomsection % Requires hyperref; this is to fix the link.
-	\addcontentsline{toc}{section}{\numberline{}\hspace{-.35in}{\SgIntTocSectionFormat{}List of Tables}}
-	\listoftables
-	\SgIntClearDoublePage
+  \newpage
+  \phantomsection % Requires hyperref; this is to fix the link.
+  \addcontentsline{toc}{section}{\numberline{}\hspace{-.35in}{\SgIntTocSectionFormat{}List of Tables}}
+  \listoftables
+  \SgIntClearDoublePage
 }
 \newcommand{\SgAddLoa}{%
-	\newpage
-	\phantomsection % Requires hyperref; this is to fix the link.
-	\addcontentsline{toc}{section}{\numberline{}\hspace{-.35in}{\SgIntTocSectionFormat{}List of Algorithms}}
-	\listofalgorithms % Note an extra e, it is required because we use algorithm2e.
-	\SgIntClearDoublePage
+  \newpage
+  \phantomsection % Requires hyperref; this is to fix the link.
+  \addcontentsline{toc}{section}{\numberline{}\hspace{-.35in}{\SgIntTocSectionFormat{}List of Algorithms}}
+  \listofalgorithms % Note an extra e, it is required because we use algorithm2e.
+  \SgIntClearDoublePage
 }
 
 
@@ -351,31 +351,31 @@
 % Reduce the spacing between top margin and chapter title.
 \renewcommand*{\@makechapterhead}[1]
 {%
-	\vspace*{10\p@}
-	{%
-		\parindent \z@ \raggedright \normalfont
-		\ifnum \c@secnumdepth >\m@ne
-			\if@mainmatter % Fix for frontmatter, mainmatter, and backmatter 040920
-				\DOCH
-			\fi
-		\fi
-		\interlinepenalty\@M
-		\if@mainmatter     % Fix for frontmatter, mainmatter, and backmatter 060424
-			\DOTI{#1}%
-		\else%      
-			\DOTIS{#1}%
-		\fi
-	}
+  \vspace*{10\p@}
+  {%
+    \parindent \z@ \raggedright \normalfont
+    \ifnum \c@secnumdepth >\m@ne
+      \if@mainmatter % Fix for frontmatter, mainmatter, and backmatter 040920
+        \DOCH
+      \fi
+    \fi
+    \interlinepenalty\@M
+    \if@mainmatter     % Fix for frontmatter, mainmatter, and backmatter 060424
+      \DOTI{#1}%
+    \else%      
+      \DOTIS{#1}%
+    \fi
+  }
 }
 
 % For the case \chapter*:
 \renewcommand*{\@makeschapterhead}[1]
 {%
-	\vspace*{10\p@}%
-	{%
-		\parindent \z@ \raggedright \normalfont
-		\interlinepenalty\@M \DOTIS{#1} \vskip 10\p@
-	}
+  \vspace*{10\p@}%
+  {%
+    \parindent \z@ \raggedright \normalfont
+    \interlinepenalty\@M \DOTIS{#1} \vskip 10\p@
+  }
 }
 \makeatother
 
@@ -397,10 +397,10 @@
 
 \hypersetup
 {%
-	colorlinks = true,
-	linkcolor  = webgreen,
-	citecolor  = cyan,
-	urlcolor   = webblue
+  colorlinks = true,
+  linkcolor  = webgreen,
+  citecolor  = cyan,
+  urlcolor   = webblue
 }
 
 \usepackage{etoolbox}
@@ -413,13 +413,13 @@
 % Define the proerties describing PDF.
 \newcommand{\SgIntSetupPdfProps}%
 {%
-	\hypersetup
-	{%
-		pdfauthor   = \SgIntAuthor,
-		pdftitle    = \SgIntTitle,
-		pdfsubject  = \SgIntSubject,
-		pdfkeywords = \SgIntKeywords
-	}
+  \hypersetup
+  {%
+    pdfauthor   = \SgIntAuthor,
+    pdftitle    = \SgIntTitle,
+    pdfsubject  = \SgIntSubject,
+    pdfkeywords = \SgIntKeywords
+  }
 }
 
 
@@ -508,53 +508,53 @@
 % T I T L E  P A G E
 \ifthenelse{\equal{\SgIntTitleCase}{upper}}
 {
-	\newcommand{\SgIntMakeUpperCase}[1]{\MakeUppercase{#1}}
+  \newcommand{\SgIntMakeUpperCase}[1]{\MakeUppercase{#1}}
 }
 {
-	\newcommand{\SgIntMakeUpperCase}[1]{#1}
+  \newcommand{\SgIntMakeUpperCase}[1]{#1}
 }
 \newcommand{\SgAddTitle}{%
-	\thispagestyle{empty}
-	\begin{center}
-		% \vspace*{-1.0in}
-		\Large{\bf{\SgIntMakeUpperCase{\SgIntTitle}}}\\
-		\vspace{0.25in}
-		\large{By}\\
-		\vspace{0.15in}
-		\large{\SgIntMakeUpperCase{\SgIntAuthor}}\\
-		\vspace{0.10in}
-		\large{B.Tech., Indian Institute of Technology Kanpur (2017)}\\
-		\vspace{0.25in}
+  \thispagestyle{empty}
+  \begin{center}
+    % \vspace*{-1.0in}
+    \Large{\bf{\SgIntMakeUpperCase{\SgIntTitle}}}\\
+    \vspace{0.25in}
+    \large{By}\\
+    \vspace{0.15in}
+    \large{\SgIntMakeUpperCase{\SgIntAuthor}}\\
+    \vspace{0.10in}
+    \large{B.Tech., Indian Institute of Technology Kanpur (2017)}\\
+    \vspace{0.25in}
 
-		\large{Submitted to the \SgIntDepartment~in Partial}\\
-		\large{Fulfillment of the Requirements for the Degree of}\\
-		\vspace{0.15in}
-		\large{\SgIntMakeUpperCase{\SgIntDegree}}\\
-		\large{at the}\\
-		\large{\SgIntMakeUpperCase{Massachusetts Institute of Technology}}\\
-		\vspace{0.15in}
-		\large{\SgIntMakeUpperCase{June 2023}}\\
-		\vspace{0.25in}
-		\small{\copyright 2023 Avik Pal. The work is licensed under \href{https://creativecommons.org/licenses/by-sa/2.0/}{CC BY-SA 2.0}.\\The author hereby grants to MIT a nonexclusive, worldwide, irrevocable, royalty-free license to exercise any and all rights under copyright, including to reproduce, preserve, distribute and publicly display copies of the thesis, or release the thesis under an open-access license.}
-		\vspace{0.4in}
-	\end{center}
+    \large{Submitted to the \SgIntDepartment~in Partial}\\
+    \large{Fulfillment of the Requirements for the Degree of}\\
+    \vspace{0.15in}
+    \large{\SgIntMakeUpperCase{\SgIntDegree}}\\
+    \large{at the}\\
+    \large{\SgIntMakeUpperCase{Massachusetts Institute of Technology}}\\
+    \vspace{0.15in}
+    \large{\SgIntMakeUpperCase{June 2023}}\\
+    \vspace{0.25in}
+    \small{\copyright 2023 Avik Pal. The work is licensed under \href{https://creativecommons.org/licenses/by-sa/2.0/}{CC BY-SA 2.0}.\\The author hereby grants to MIT a nonexclusive, worldwide, irrevocable, royalty-free license to exercise any and all rights under copyright, including to reproduce, preserve, distribute and publicly display copies of the thesis, or release the thesis under an open-access license.}
+    \vspace{0.4in}
+  \end{center}
 
-	\large{Authored By: \phantom{xxxxxx} \SgIntAuthor}\\
-	\large{\phantom{Authored By: xxxxxx} \SgIntDepartment}\\
-	\large{\phantom{Authored By: xxxxxx} \today}\\
-	\vspace{0.05in}\\
-	\large{Certified By: \phantom{xxxxxxx} \SgIntAdvisor}\\
-	\large{\phantom{Certified By: xxxxxxx} Professor of Applied Mathematics}\\
-	\large{\phantom{Certified By: xxxxxxx} Thesis Supervisor}\\
-	\vspace{0.02in}\\
-	\large{Certified By: \phantom{xxxxxxx} Chris Rackauckas}\\
-	\large{\phantom{Certified By: xxxxxxx} Applied Mathematics Instructor}\\
-	\large{\phantom{Certified By: xxxxxxx} Thesis Supervisor}\\
-	\vspace{0.05in}\\
-	\large{Accepted By: \phantom{xxxxxxx} Leslie A. Kolodziejski}\\
-	\large{\phantom{Accepted By: xxxxxxx} Professor of Electrical Engineering and Computer Science}\\
-	\large{\phantom{Accepted By: xxxxxxx} Chair, Department Committee on Graduate Students}
-	\SgIntClearDoublePage
+  \large{Authored By: \phantom{xxxxxx} \SgIntAuthor}\\
+  \large{\phantom{Authored By: xxxxxx} \SgIntDepartment}\\
+  \large{\phantom{Authored By: xxxxxx} \today}\\
+  \vspace{0.05in}\\
+  \large{Certified By: \phantom{xxxxxxx} \SgIntAdvisor}\\
+  \large{\phantom{Certified By: xxxxxxx} Professor of Applied Mathematics}\\
+  \large{\phantom{Certified By: xxxxxxx} Thesis Supervisor}\\
+  \vspace{0.02in}\\
+  \large{Certified By: \phantom{xxxxxxx} Chris Rackauckas}\\
+  \large{\phantom{Certified By: xxxxxxx} Research Affiliate, Department of Applied Mathematics}\\
+  \large{\phantom{Certified By: xxxxxxx} Thesis Supervisor}\\
+  \vspace{0.05in}\\
+  \large{Accepted By: \phantom{xxxxxxx} Leslie A. Kolodziejski}\\
+  \large{\phantom{Accepted By: xxxxxxx} Professor of Electrical Engineering and Computer Science}\\
+  \large{\phantom{Accepted By: xxxxxxx} Chair, Department Committee on Graduate Students}
+  \SgIntClearDoublePage
 }
 
 
@@ -568,19 +568,19 @@
 % sides, and on its own page.
 \newenvironment{acknowledgments}%
 {%
-	\thispagestyle{plain}
-	\begin{center}
-		\vspace*{1.5cm}
-		{%
-			\Large \bfseries Acknowledgments
-		}
-	\end{center}
-	\vspace{0.5cm}
-	\begin{quote}
-		}
-		{%
-	\end{quote}
-	\SgIntClearDoublePage
+  \thispagestyle{plain}
+  \begin{center}
+    \vspace*{1.5cm}
+    {%
+      \Large \bfseries Acknowledgments
+    }
+  \end{center}
+  \vspace{0.5cm}
+  \begin{quote}
+    }
+    {%
+  \end{quote}
+  \SgIntClearDoublePage
 }
 
 
@@ -593,17 +593,36 @@
 % i.e. tabbed in at both sides, and on its own page.
 \renewenvironment{abstract}
 {%
-	\thispagestyle{plain}
-	\begin{center}
-		\vspace*{1.5cm}
-		{\Large\bfseries Abstract}
-	\end{center}
-	\vspace{0.5cm}
-	\begin{quote}
-		}
-		{%
-	\end{quote}
-	\SgIntClearDoublePage
+  \thispagestyle{plain}
+
+  \begin{center}
+    {\Large\bfseries \SgIntTitle}\\
+    \vspace{0.5em}
+    {by}\\
+    \vspace{0.5em}
+    {\Large\bfseries \SgIntAuthor}\\
+    \vspace{1.0em}
+    \large{Submitted to the \SgIntDepartment{}}\\
+    \large{on \today{} in partial fulfillment of the requirements for the degree of}\\
+    \large{\SgIntDegree{} in Electrical Engineering and Computer Science}\\
+  \end{center}
+
+  \vspace{1.5em}
+  {\Large\bfseries Abstract}\\
+  \vspace{0.25em}
+  \begin{quote}
+  }
+  {%
+  \end{quote}
+
+  \vspace{1.5em}
+  \large{\textit{Thesis Supervisor:} \SgIntAdvisor}\\
+  \large{\textit{Title:} Professor of Applied Mathematics}
+  \vspace{0.1em}\\
+  \large{\textit{Thesis Supervisor:} Chris Rackauckas}\\
+  \large{\textit{Title:} Research Affiliate, Department of Applied Mathematics}
+
+  \SgIntClearDoublePage
 }
 
 % -----------------------------------------------------------------------
@@ -632,12 +651,12 @@
 % remainder of thesis (arabic, starting at 1).
 \newenvironment{frontmatter}
 {%
-	\setcounter{page}{1}
-	\renewcommand{\thepage}{\roman{page}}
+  \setcounter{page}{1}
+  \renewcommand{\thepage}{\roman{page}}
 }
 {%
-	\clearpage
-	\renewcommand{\thepage}{\arabic{page}}
-	\setcounter{page}{1}
-	\SgIntClearDoublePage
+  \clearpage
+  \renewcommand{\thepage}{\arabic{page}}
+  \setcounter{page}{1}
+  \SgIntClearDoublePage
 }

@@ -87,11 +87,17 @@ For small systems we can compute $\frac{\partial \func{f_\theta}{\zstar}}{\parti
   \label{fig:model_architecture_discrete_deq}
 \end{figure}
 
-Deep Equilibrium Networks (DEQs)~\citep{bai_deep_2019} are implicit models where the output space represents a steady-state solution. Intuitively, this represents infinitely deep neural networks with input injection, i.e., an infinite composition of explicit layers $z_{n + 1} = f_\theta(z_n, x)$ with $z_0 = 0$ and $n \rightarrow \infty$. In practice, it is equivalent to evaluating a dynamical system until it reaches a steady state $\zstar = f_\theta(\zstar, x)$.
-
+Deep Equilibrium Networks (DEQs)~\citep{bai_deep_2019} are implicit models where the output space represents a steady-state solution. Intuitively, this represents infinitely deep neural networks with input injection, i.e., an infinite composition of explicit layers $z_{n + 1} = f_\theta(z_n, x)$ with $z_0 = 0$ and $n \rightarrow \infty$. In practice, it is equivalent to evaluating a dynamical system until it reaches a steady state:
+%
+\begin{equation}
+  \zstar = f_\theta(\zstar, x)\label{eq:discrete_deq}
+\end{equation}
+%
 % \citet{bai_deep_2019, bai_multiscale_2020} perform nonlinear fixed point iterations of the discrete dynamical system using Broyden's method~\citep{broyden1965class, bai_multiscale_2020} to reach this steady-state solution. 
 
 Evaluating DEQs requires solving a steady-state equation involving multiple evaluations of the explicit layer slowing down the forward pass. However, driving the solution to steady-state makes the backward pass very efficient~\citep{johnson2012notes} (See \Cref{sec:sensitivity_analysis_ssproblems}). Despite a potentially infinite number of evaluations of $f_\theta$ in the forward pass, backpropagation only requires solving a linear equation.
+
+Deep Equilibrium Models have been used as a drop-in replacement for Explicit Neural Networks for Time Series applications~\citep{bai_deep_2019} and Computer Vision~\citep{bai_multiscale_2020}. \citet{winston2020monotone} proposed additional structure on the DEQ formulation (monotone DEQs) to ensure that \Cref{eq:discrete_deq} has a unique solution. \citet{revay_lipschitz_2020} show that training using Lipchitz bounds on the DEQ formulation leads to greater robustness to adversarial attacks.
 
 \subsection{Nonlinear Solvers}
 \label{subsec:nonlinear_solvers_deqs}
@@ -161,40 +167,40 @@ $\mathbf{u}$ and $\mathbf{v}$ come from Sherman-Morrison Formula~\citep{sherman1
 
 % \todo{\url{https://citeseerx.ist.psu.edu/doc/10.1.1.636.3743}}
 
-JFNK Methods are used to solve Linear System of Equations without actually computing the Jacobian Matrix. These methods require the ability to compute matrix-vector products. As we will observe in \Cref{subsec:adjoint_equations_deqs}, ability to avoid the computation of the Jacobian matrix is crucial for large scale steady state problems. JNFK methods use Krylov subspace $K_j$ of dimension $k$ to solve linear equations of the form $A x = b$  where $A \in \mathbb{R}^{n \times n}$ is a sparse, non-symmetric matrix, $b \in \mathbb{R}^n$ is a known vector, and $x \in \mathbb{R}^n$ is the solution vector.
+JFNK Methods are used to solve Linear System of Equations without actually computing the Jacobian Matrix. These methods require the ability to compute matrix-vector products. As we will observe in \Cref{subsec:adjoint_equations_deqs}, ability to avoid the computation of the Jacobian matrix is crucial for large scale steady state problems. JNFK methods use Krylov subspace $K_j$ of dimension $k$ to solve linear equations of the form $A x = b$  where $A \in \mathbb{R}^{n \times n}$ is an invertible matrix, $b \in \mathbb{R}^n$ is a known vector, and $x \in \mathbb{R}^n$ is the solution vector.
 %
 \begin{align}
-  K_j                 & = \func{\texttt{span}}{r_0, Ar_0, A^2 r_0, \dots, A^{j-1} r_0}\label{eq:krylov_subspace} \\
+  \func{K_j}{A, b}    & = \func{\texttt{span}}{r_0, Ar_0, A^2 r_0, \dots, A^{j-1} r_0}\label{eq:krylov_subspace} \\
   \texttt{where } r_0 & = b - A x_0
 \end{align}
 %
-% \todo{chatgpt}
-% % In this section, we will describe Generalized Minimal Residual Method (GMRES) a popular JNFK method, that approximates the solution of $Ax = b$ using $x_n \in K_n$ which minimizes the Euclidean norm of the residual $r_n = b - A x_n$.
-% The Generalized Minimal Residual Method (GMRES) is a widely used JNFK method for solving large-scale linear systems of equations of the form $Ax=b$. GMRES is an iterative method that generates a sequence of approximate solutions $x_k \in K_k$, where $K_k$ is the Krylov subspace of dimension $k$. GMRES seeks to find the approximate solution $x_k$ that minimizes the Euclidean norm of the residual $r_k = b - Ax_k$ over the subspace $K_k$. Specifically, GMRES solves the minimization problem
-% %
-% \begin{equation}
-%   \min_{x \in K_k} |b - Ax|_2,
-% \end{equation}
-% %
-% where $| \cdot |2$ denotes the Euclidean norm. The solution $x_k$ is obtained using the Arnoldi iteration, which generates an orthogonal basis ${q_1, q_2, \dots, q{k+1}}$ for $K_{k+1}$ using the Arnoldi algorithm. The Arnoldi algorithm constructs the upper Hessenberg matrix $H_k \in \mathbb{R}^{(k+1) \times k}$ and the vector $q_{k+1}$ such that
+In this section, we will describe Generalized Minimal Residual Method (GMRES)~\citep{saad1986gmres} a popular JNFK method, that approximates the solution of $Ax = b$ using $x_n \in K_n$ which minimizes the Euclidean norm of the residual $r_n = b - A x_n$.
 
-% \begin{equation}
-%   AQ_k = Q_{k+1} H_k,
-% \end{equation}
+The solution $x_n$ is obtained using the Arnoldi iteration, which generates an orthonormal basis $\{q_1, q_2, \dots, q_{n+1}\}$ for $\func{K_{n+1}}{A, b}$ and the upper Hessenberg matrix $H_n \in \mathbb{R}^{(n+1) \times n}$ s.t:
+%
+\begin{align}
+  AQ_n                                & = Q_{n+1} H_n                                                      \\
+  \texttt{where } Q_{n\phantom{ + 1}} & = \begin{bmatrix}
+                                            q_1^T \quad q_2^T \quad \dots \quad q_{n\phantom{+ 1}}^T
+                                          \end{bmatrix} \\
+  Q_{n + 1}                           & = \begin{bmatrix}
+                                            q_1^T \quad q_2^T \quad \dots \quad q_{n + 1}^T
+                                          \end{bmatrix}
+\end{align}
+%
+The solution $x_n$ is then obtained by solving the least-squares problem:
+%
+\begin{equation}
+  \min_{x_n} \|b - Ax_n\|_2 = \min_{y_n \in \mathbb{R}^n} \| Q_{n + 1} \left( r_0 e_1 - H_n y_n \right) \|_2 = \min_{y_n \in \mathbb{R}^n} \| H_n y_n - r_0 e_1 \|_2,
+\end{equation}
+%
+where $e_1$ is the first standard basis vector of length $n + 1$. The approximate solution is then given by
 
-% where $Q_k = [q_1, q_2, \dots, q_k]$ and $Q_{k+1} = [q_1, q_2, \dots, q_{k+1}]$. The solution $x_k$ is then obtained by solving the least-squares problem
+\begin{equation}
+  x_n = Q_n y_n + x_0
+\end{equation}
 
-% \begin{equation}
-%   \min_{y \in \mathbb{R}^k} | \beta e_1 - H_k y |_2,
-% \end{equation}
-
-% where $\beta = |b|_2$ and $e_1$ is the first standard basis vector. The approximate solution is then given by
-
-% \begin{equation}
-%   x_k = Q_k y_k.
-% \end{equation}
-
-% GMRES is known to converge for a wide range of problems and is particularly effective for large-scale, sparse linear systems. However, it may require a large number of iterations to achieve convergence, and each iteration requires solving a linear system, which can be computationally expensive. Additionally, GMRES can be sensitive to the choice of preconditioner, which is used to improve the convergence rate of the algorithm.
+GMRES is particularly effective for large-scale linear systems. GMRES can be sensitive to the choice of preconditioner, which is used to improve the convergence rate of the algorithm. However, for large scale neural networks~\citep{pal2022mixing} GMRES has been shown to be robust even without preconditioning.
 
 
 \subsection{Adjoint Equations}
@@ -220,8 +226,6 @@ The second term is the Vector-Jacobian Product (VJP) which can be efficiently co
 
 % \todo{\url{https://docs.sciml.ai/NonlinearSolve/stable/basics/TerminationCondition/}}
 
-\section{Common Applications of DEQs}
-\label{sec:common_applications_deqs}
 
 \section{Accelerating DEQs}
 \label{sec:accelerating_deqs}
@@ -231,14 +235,38 @@ DEQs share the benefits of implicit neural networks in reducing the memory requi
 \subsection{Jacobian Regularization of DEQs}
 \label{subsec:jacobian_regularization_deqs}
 
-\citet{bai2021stabilizing}
+The stability of fixed point convergence $\zstar$ is directly affected by the spectral radius. At equilibrium, the spectral radius ($\rho$) of the Jacobian ($J_{f_\theta}$) is given by:
+%
+\begin{equation}
+  \rho\left( J_{f_\theta}(z^*) \right) = \rho\left( J_{f_\theta}(z^*)^T \right) = \max \left( |\lambda_1|, \dots, |\lambda_d| \right)
+\end{equation}
+%
+where $\lambda_1, \dots, \lambda_d$ are the eigenvalues of $J_{f_\theta}(z^*)$. The spectral radius can be computed using power iterations, however, these are prohibitively expensive for DEQs (due to successive jacobian vector products). \citet{bai2021stabilizing} propose to use the Frobenius norm to regularize the Jacobian matrix since:
+%
+\begin{equation}
+  \rho\left( J_{f_\theta}(z^*) \right) \leq \sigma\left( J_{f_\theta}(z^*) \right) \leq \sqrt{\text{Tr}\left(J_{f_\theta}(z^*) J_{f_\theta}(z^*)^T\right)} = \|J_{f_\theta}(z^*)\|_F
+\end{equation}
+%
+The Frobenius norm can be estimated using Hutchinson Trace Estimation~\citep{hutchinson1989stochastic}. Hence, \citet{bai2021stabilizing} propose to stabilize DEQ training using an additional loss term:
+%
+\begin{align}
+  \mathcal{L}_{\text{jacobian}} &= \gamma \cdot \frac{\| \epsilon^T J_{f_\theta}(z^*) \|_2^2}{d}
+\end{align}
+%
+Empirically using jacobian stabilization yields an acceleration of over $2.5$x in training time over discrete DEQs.
 
 \subsection{Jacobian-Free Backpropagation}
 \label{subsec:jacobian_free_backpropagation}
 
-\citet{fung2022jfb}
+Standard back-propagation through fixed point iterations is computationally prohibitive. Hence, we use the adjoint method described in \Cref{sec:sensitivity_analysis_ssproblems} to efficiently compute the gradients of steady state problems w.r.t. the parameters. However, this method requires computing $\lambda^T \frac{\partial \func{f_\theta}{z^*}}{\partial z^{*}}$ which can be expensive is performed repeatedly. \citet{fung2022jfb} show that if we perform a $0^{th}$-order approximation of Neumann series:
+%
+\begin{equation}
+  \left( I - \frac{\func{f_\theta}{z^*}}{\partial z^{*}} \right)^{-1} = \sum_{k = 0}^\infty \left( \frac{\func{f_\theta}{z^*}}{\partial z^{*}} \right)^k
+\end{equation}
+%
+we obtain a theoretically justified back-propagation scheme. This is equivalent to ignoring the fixed point iterations and performing a single backward pass through the evaluation of $\func{f_\theta}{z^*}$ The authors show that Jacobian Free Back-propagation (JFB) achieves competitive results on MNIST, CIFAR-10 and SVHN, while drastically reducing training timings. However, we note that our experiments to reproduce similar results for larger models on ImageNet did not lead to stable convergence.
 
-\subsection{Neural Deep Equilibrium Solvers}
-\label{subsec:neural_deep_equilibrium_solvers}
+% \subsection{Neural Deep Equilibrium Solvers}
+% \label{subsec:neural_deep_equilibrium_solvers}
 
-\citet{bai2021neural}
+% \citet{bai2021neural}
