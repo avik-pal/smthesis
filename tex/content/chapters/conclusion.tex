@@ -1,10 +1,31 @@
 \chapter{Conclusion}
 \label{chapter:conclusion}
 
-In this thesis, we have introduced two novel training strategies for accelerating Neural Differential Equations -- first building upon our prior work on global regularization~\citep{pal2021opening}
+In this thesis, we have two objectives. Firstly, we have attempted to provide an overview of numerical methods literature for deep learning practitioners and researchers. By reviewing traditional numerical methods, we attempt to show how we can leverage domain specific knowledge of solver internals to accelerate training of Neural Differential Equations. Additionally, we discuss non-linear solvers to expose readers to the internals of deep equilibrium models and draw parallels between Neural ODEs and deep equilibrium models.
 
-\section{Summary}
-\label{sec:summary}
+Additionally in this thesis we have introduced two novel training strategies for accelerating Neural Differential Equations:
+%
+\begin{enumerate}
+    \item Building upon the prior works on discrete deep equilibrium networks~\citep{bai_deep_2019,bai_multiscale_2020}, we propose continuous deep equilibrium methods~\citep{pal2022mixing} which are a special case for Neural ODEs with the integration end-point being $\infty$. Interestingly, we demonstrate that integrating Neural ODEs to $\infty$ paradoxically, simplifies the back-propagation thereby accelerating training significantly.
+    
+        Additioanlly, we propose methods like Skip DEQ and Skip Regularized DEQs which further accelerate training by attempting to predict the steady-state or simplify the learned dynamics.
 
-\section{Future Works}
+    \item Next, we provide a detailed review on \citet{pal2021opening}, and discuss the major shortcomings of discrete sensitivity analysis methods. We then propose a novel local regularization method for Neural ODEs which is inspired by the global regularization method proposed in \citet{pal2021opening}. We demonstrate that our proposed method is able to achieve similar performance as global regularization methods while being significantly easier to integrate into existing code-bases.
+\end{enumerate}
+%
+
+\section*{Future Works}
 \label{sec:future_works}
+
+In this thesis, we have described how to accelerate the training and prediction timings of Neural Differential Equations. However, despite these advances we note that these models are still not competitive to standard explicit models for classical deep learning tasks. But despite their shortcomings in traditional tasks, we note that implicit models still hold immense value in areas where it is hard to retrofit explicit models. For example, in the case of physical simulations, implicit models like Hamiltonian Neural Networks~\citep{greydanus2019hamiltonian}, Lagrangian Neural Networks~\citep{cranmer2020lagrangian}, etc. can directly conserve physical laws. Continuous Normalizing Flows~\citep{chen2018neural} and FFJORD~\citep{grathwohl2018ffjord} are able to perform density estimation via normalizing flows without the need for specific invertible architectures. Latent ODE models~\citep{rubanova2019latent} can successfully learn time-series models from irregularly spaced data. Hence, while implicit models might not be competitive in traditional domains like image classification, we believe that they are already competitive in several niche domains.
+
+Another domain where implicit models can be of immense value are in enforcing hard constraints on the output space of the neural networks. We have already seen convex optimization layers~\citep{agrawal2019differentiable} for enforcing convex constraints in neural network outputs. However, we believe we can use implicit models like Neural Boundary Value Problems (BVPs) for enforcing arbitrary equality constraints on the output space. Essentially, general  BVPs a \todo{write neural bvp}
+
+Furthermore, we can enforce properties like complementarity on the output space in the form of Neural Nonlinear Complementarity Models:
+%
+\begin{align}
+    &x^T \func{f}{x} = 0\\
+    & x \geq 0 \qquad \func{f}{x} \geq 0
+\end{align}
+%
+Despite these strong inductive biases in these models, we note that the back-propagation through these models is still well defined and extremely simple. Most of these models can be reduced to Nonlinear Problems and hence back-propagation through these models is as simple as solving a Linear Problem. We believe that reformulation of common constraints as Nonlinear Problems opens up a pandora's box of possibilities for implicit models in enforcing hard constraints.
