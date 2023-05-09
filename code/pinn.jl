@@ -1,60 +1,49 @@
-using ComponentArrays, Lux, NNlib, StableRNGs, Statistics, TaylorDiff,
-    Optimisers, Zygote
+using NeuralPDE, Lux, NNlib, ModelingToolkit, Optimization, OptimizationOptimJL
+import ModelingToolkit: Interval, infimum, supremum
 
-rng = StableRNG(1234)
+@parameters x, t
+@variables u(..)
+∂t = Differential(t)
+∂x = Differential(x)
+∂x² = Differential(x)^2
+∂x³ = Differential(x)^3
+∂x⁴ = Differential(x)^4
 
-model = Chain(Dense(1 => 32, relu; allow_fast_activation=false), Dense(32 => 1))
-ps, st = Lux.setup(rng, model)
-ps = ComponentArray(ps)
+α = 1
+β = 4
+γ = 1
+eq = ∂t(u(x, t)) + u(x, t) * ∂x(u(x, t)) + α * ∂x²(u(x, t)) + β * ∂x³(u(x, t)) + γ * ∂x⁴(u(x, t)) ~ 0
 
-function taylor_derivative(f, x, ::Val{N}) where {N}
-    x_ = map(__x -> TaylorDiff.make_taylor(__x, 1.0f0, Val(N + 1)), x)
-    out = f(x_)
-    if out isa Tuple
-        y, others... = out
-        return (TaylorDiff.extract_derivative(y, N + 1), others...)
-    else
-        return TaylorDiff.extract_derivative(out, N + 1)
-    end
+uₑ(x, t; θ=-x / 2 + t) = 11 + 15 * tanh(θ) - 15 * tanh(θ)^2 - 15 * tanh(θ)^3
+du(x, t; θ=-x / 2 + t) = 15 / 2 * (tanh(θ) + 1) * (3 * tanh(θ) - 1) * sech(z)^2
+
+bcs = [
+    u(x, 0) ~ uₑ(x, 0),
+    u(-10, t) ~ uₑ(-10, t),
+    u(10, t) ~ uₑ(10, t),
+    ∂x(u(-10, t)) ~ du(-10, t),
+    ∂x(u(10, t)) ~ du(10, t),
+]
+
+# Space and time domains
+domains = [x ∈ Interval(-10.0, 10.0), t ∈ Interval(0.0, 1.0)]
+
+# Discretization
+dx = 0.4;
+dt = 0.2;
+
+# Neural network
+chain = Chain(Dense(2 => 12, σ), Dense(12 => 12, σ), Dense(12 => 1))
+
+discretization = PhysicsInformedNN(chain, GridTraining([dx, dt]))
+@named pde_system = PDESystem(eq, bcs, domains, [x, t], [u(x, t)])
+prob = discretize(pde_system, discretization)
+
+callback = function (p, l)
+    println("Current loss is: $l")
+    return false
 end
 
-function gradient(model, x, ps, st)
-    ps_ = map(__x -> TaylorDiff.make_taylor(__x, 1.0f0, Val(2)), ps)
-    y, st_ = model(x, ps_, st)
-    return TaylorDiff.extract_derivative(sum(y), 2)
-end
-
-gradient(model, randn(Float32, 1, 1), ps, st)
-
-function g(model, t, ps, st)
-    y, st_ = model(t, ps, st)
-    return t .* y .+ 1.0f0, st_
-end
-
-function loss_function(model, ps, st)
-    t = reshape(collect(-1.0f0:1.0f-1:1.0f0), 1, :)
-    y = cos.(Float32(2π) .* t)
-
-    ∂³g∂t³, st_ = taylor_derivative(__t -> g(model, __t, ps, st), t, Val(3))
-    return mean(abs2, ∂³g∂t³ .- y), st_
-end
-
-loss_function(model, ps, st)
-
-
-
-Zygote.gradient(p -> first(loss_function(model, p, st)), ps)
-
-opt = Adam(0.01f0)
-st_opt = Optimisers.setup(opt, ps)
-
-for i in 1:10000
-    loss, pb = pullback(p -> first(loss_function(model, p, st)), ps)
-    gs = only(pb(one(loss)))
-    i % 100 == 1 && @info iteration = i loss = loss
-    st_opt, ps = Optimisers.update(st_opt, ps, gs)
-end
-
-t = collect(-1.0f0:1.0f-2:1.0f0)
-y_true = vec(1 .- sin.(Float32(2π) .* t) ./ Float32(8π))
-y_pred = vec(first(g(model, reshape(t, 1, :), ps, st)))
+opt = OptimizationOptimJL.BFGS()
+res = Optimization.solve(prob, opt; callback, maxiters=2000)
+ϕ = discretization.phi
