@@ -1,10 +1,19 @@
 \chapter{Lux.jl: Bridging Scientific Computing and Deep Learning}
 \label{chapter:lux_bridging_scientific_computing_and_deep_learning}
 
-% \citet{Rackauckas2020GeneralizedPL}
-
 \section{Introduction}
 \label{sec:introduction_lux}
+
+Julia already has quite a few well established Neural Network Frameworks – Flux~\citep{innes2018fashionable} \& KNet~\citep{yuret2016knet}. However, certain design elements – \textit{Coupled Model and Parameters} \& \textit{Internal Mutations} – associated with these frameworks make them less compiler and user friendly. Making changes to address these problems in the respective frameworks would be too disruptive for users. In this chapter, we introduce Lux: a neural network framework built completely using pure functions to make it both compiler and autodiff friendly.
+
+The main design principles of Lux include:
+%
+\begin{enumerate}
+  \item \textit{Truly Immutable Models} storing information to construct a layer rather than the parameters and states.
+  \item All models are \textit{pure functions} and outputs are completely \textit{deterministic} given the inputs.
+  \item Models are decoupled from the parameters and states. This allows us to \textit{perform easy parameter manipulation} like in \textit{Weight Normalization}, \textit{Hypernetworks} and \textit{Spectral Normalization}.
+\end{enumerate}
+%
 
 \section{Composability via Generic Parameterization}
 \label{sec:composability}
@@ -116,13 +125,20 @@ The initial and boundary conditions are given by:
 
 \Cref{fig:lux_pinn_plot} demonstrates that our PINN can solve the Kuramoto–Sivashinsky equation with high accuracy.
 
-\section{Performance}
-\label{sec:performance_lux}
-
-\todo{compare against flux and maybe knet}
-
 \section{Discussion}
 \label{sec:discussion_lux}
 
+In this chapter, we have introduced a new neural network framework in Julia. We designed the framework to be modular and composable. We demonstrated the composability of Lux.jl by showing how it can be used with other packages in the Julia ecosystem. We also showed that Lux.jl can be used to solve a variety of problems. Despite being in early days of development, Lux.jl is already being used extensively in research projects and being extended by the open-source community.
+
 \subsection{Current Limitations}
 \label{subsec:current_limitations}
+
+Lux.jl has the following known limitations, most of which are being actively worked upon:
+%
+\begin{itemize}
+  \item Lux.jl is not the fastest framework for training small neural networks on CPU. For smaller architectures, \href{https://github.com/PumasAI/SimpleChains.jl}{SmallChains.jl} is the fastest option.
+  \item Lux.jl shares the same backend as Flux.jl and hence migration from Flux to Lux doesn't speed up user code. However, a new backend \href{https://github.com/LuxDL/LuxLib.jl}{LuxLib.jl} is under development which should be faster than Flux.jl's backend.
+  \item Lux.jl is currently tested to work on CPU and NVIDIA CUDA GPUs. Support for AMD GPUs is being worked upon.
+  \item Nested Reverse Mode differentiation of Lux models is not supported yet.
+\end{itemize}
+%

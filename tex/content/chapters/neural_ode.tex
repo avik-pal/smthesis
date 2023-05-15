@@ -16,9 +16,9 @@ This effectively describes the evolution of a state $\func{z}{t}$. To compute $\
   \func{z}{t} = \int_{t_0}^{t} \func{f}{z, p, t} \, \dt
 \end{equation}
 %
-where $t_0$ is the initial time. However, computing these solutions analytically is almost impossible, and hence we need to rely on numerical solvers. For this thesis, we will focus exclusively on Initial Value Problems (IVP) which specify the differential equations along with an initial condition, i.e., the value of the state at $t_0$: $z(t_0)$. There are other kinds of ODE Problems like Boundary Value Problems (BVP) which specify additional conditions at the end of the interval, i.e., $z(t_1)$.
+where $t_0$ is the initial time. However, analytically computing these solutions is almost impossible; hence, we must rely on numerical solvers. For this thesis, we will focus exclusively on Initial Value Problems (IVP), which specify the differential equations along with an initial condition, i.e., the value of the state at $t_0$: $z(t_0)$. Other kinds of ODE Problems, like Boundary Value Problems (BVP), specify additional conditions at the end of the interval, i.e., $z(t_1)$.
 
-Numerical Solvers for ODEs can be broadly categorized into Implicit Methods and Explicit Methods. Explicit Methods compute the state of the dynamical system at a future time-point given the current state. Implicit Methods solve for the state of the dynamical system at a future time-point given the current state \textit{and the later one}. For example, consider two extremely simple numerical solvers for an ODE:
+We can broadly categorize Numerical Solvers for ODEs into Implicit Methods and Explicit Methods. Explicit Methods compute the dynamical system's state at a future time-point given the current state. Implicit Methods solve for the dynamical system's state at a future time-point given the current state \textit{and the later one}. For example, consider two extremely simple numerical solvers for an ODE:
 %
 \begin{itemize}
   \item Euler Method (Explicit Method)~\citep{euler1824institutionum}:
@@ -35,12 +35,12 @@ Numerical Solvers for ODEs can be broadly categorized into Implicit Methods and 
         %
 \end{itemize}
 %
-Explicit methods tend to be faster than implicit methods but are not effective for solving stiff equations~\citep{wanner1996solving,kim2021stiff}. In this thesis, we will exclusively use explicit methods. A detailed discussion on implicit and explicit methods is beyond the scope of this thesis, and we refer the readers to \citet{rackauckas2019scimlbook}.
+Explicit methods are usually faster than implicit methods but are ineffective for solving stiff equations~\citep{wanner1996solving,kim2021stiff}. In this thesis, we will exclusively use explicit methods. A detailed discussion on implicit and explicit methods is beyond the scope of this thesis, and we refer the readers to \citet{rackauckas2019scimlbook}.
 
 \section{Explicit ODE Solvers}
 \label{subsec:explicit_ode_solvers}
 
-In this section, we will briefly discuss ODE solvers that are relevant in the context of Neural ODEs. %  We start with Euler Method~(\Cref{subsec:euler_method}) to give a simple introduction to numerical solvers. Then we build upon that to describe the Tsitouras $\mathbf{5 (4)}$ Runge-Kutta Method~(\Cref{subsec:tsit5_method}) that servers as an excellent default for most ODEs at lower tolerances. Finally, we describe $\mathbf{3^{rd}}$ order Adams-Bashforth Method~(\Cref{subsec:vcab3_method}), a multi-step method that we find to be particularly useful for Neural ODEs.
+In this section, we will briefly discuss relevant ODE solvers in the context of Neural ODEs. %  We start with Euler Method~(\Cref{subsec:euler_method}) to give a simple introduction to numerical solvers. Then we build upon that to describe the Tsitouras $\mathbf{5 (4)}$ Runge-Kutta Method~(\Cref{subsec:tsit5_method}) that servers as an excellent default for most ODEs at lower tolerances. Finally, we describe $\mathbf{3^{rd}}$ order Adams-Bashforth Method~(\Cref{subsec:vcab3_method}), a multi-step method that we find to be particularly useful for Neural ODEs.
 
 % \subsection{Euler Method}
 % \label{subsec:euler_method}
