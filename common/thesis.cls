@@ -397,9 +397,11 @@
 
 \hypersetup
 {%
+  pdftitle = On Efficient Training and Inference of Neural Differential Equations,
+  pdfauthor = Avik Pal,
   colorlinks = true,
   linkcolor  = webgreen,
-  citecolor  = cyan,
+  citecolor  = magenta,
   urlcolor   = webblue
 }
 
@@ -546,10 +548,10 @@
   \large{Certified By: \phantom{xxxxxxx} \SgIntAdvisor}\\
   \large{\phantom{Certified By: xxxxxxx} Professor of Applied Mathematics}\\
   \large{\phantom{Certified By: xxxxxxx} Thesis Supervisor}\\
-  \vspace{0.02in}\\
-  \large{Certified By: \phantom{xxxxxxx} Chris Rackauckas}\\
-  \large{\phantom{Certified By: xxxxxxx} Research Affiliate, Department of Applied Mathematics}\\
-  \large{\phantom{Certified By: xxxxxxx} Thesis Supervisor}\\
+  % \vspace{0.02in}\\
+  % \large{Certified By: \phantom{xxxxxxx} Chris Rackauckas}\\
+  % \large{\phantom{Certified By: xxxxxxx} Research Affiliate, Department of Applied Mathematics}\\
+  % \large{\phantom{Certified By: xxxxxxx} Thesis Supervisor}\\
   \vspace{0.05in}\\
   \large{Accepted By: \phantom{xxxxxxx} Leslie A. Kolodziejski}\\
   \large{\phantom{Accepted By: xxxxxxx} Professor of Electrical Engineering and Computer Science}\\
@@ -618,9 +620,9 @@
   \vspace{1.5em}
   \large{\textit{Thesis Supervisor:} \SgIntAdvisor}\\
   \large{\textit{Title:} Professor of Applied Mathematics}
-  \vspace{0.25em}\\
-  \large{\textit{Thesis Supervisor:} Chris Rackauckas}\\
-  \large{\textit{Title:} Research Affiliate, Department of Applied Mathematics}
+  % \vspace{0.25em}\\
+  % \large{\textit{Thesis Supervisor:} Chris Rackauckas}\\
+  % \large{\textit{Title:} Research Affiliate, Department of Applied Mathematics}
 
   \SgIntClearDoublePage
 }
